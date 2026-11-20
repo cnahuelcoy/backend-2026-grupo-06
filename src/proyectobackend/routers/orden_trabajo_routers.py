@@ -141,7 +141,8 @@ def listar_ordenes_trabajo(
     description=(
         "Actualiza solo los campos enviados y valida el vehículo asociado. "
         "Devuelve 404 si falta la orden o el vehículo, 409 al intentar "
-        "reabrir una orden finalizada."
+        "reabrir una orden finalizada o si otra solicitud la modificó durante "
+        "la actualización. Ante un conflicto, vuelve a consultar la orden."
     ),
 )
 def actualizar_orden_trabajo(
@@ -162,7 +163,7 @@ def actualizar_orden_trabajo(
     except ValueError as error:
         code = str(error).partition(":")[0]
 
-        if code == "INVALID_WORK_ORDER_STATE":
+        if code in {"INVALID_WORK_ORDER_STATE", "WORK_ORDER_CONCURRENT_UPDATE"}:
             return _respuesta_error(
                 error,
                 status.HTTP_409_CONFLICT,

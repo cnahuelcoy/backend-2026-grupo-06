@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import Literal
 
 from proyectobackend.domain.orden_trabajo import EstadoOrdenTrabajo, OrdenTrabajo
@@ -107,10 +108,11 @@ class OrdenTrabajoService:
         if estado_nuevo is not None:
             self._validar_transicion_estado(orden.estado, estado_nuevo)
 
-        for campo, valor in cambios.items():
-            setattr(orden, campo, valor)
-
-        orden_actualizada = self.repository.actualizar(orden_id, orden)
+        orden_actualizada = self.repository.actualizar(
+            orden_id,
+            replace(orden, **cambios),
+            orden_original=orden,
+        )
         if orden_actualizada is None:
             raise LookupError(
                 f"WORK_ORDER_NOT_FOUND:No se encontró la orden de trabajo con ID {orden_id}"

@@ -1,7 +1,7 @@
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from proyectobackend.database.session import SessionLocal
-from proyectobackend.domain.orden_trabajo import OrdenTrabajo
+from proyectobackend.domain.orden_trabajo import ConflictoOrdenTrabajo, OrdenTrabajo
 from proyectobackend.models.orden_trabajo import OrdenTrabajoModel
 
 
@@ -60,28 +60,32 @@ class OrdenTrabajoRepository:
         self,
         orden_id: int,
         orden_actualizada: OrdenTrabajo,
+        orden_original: OrdenTrabajo,
     ) -> OrdenTrabajo | None:
-        with SessionLocal() as session:
-            model = session.get(OrdenTrabajoModel, orden_id)
-
-            if model is None:
+        campos = (
+            "vehiculo_id", "fecha_ingreso", "descripcion_problema",
+            "kilometraje_ingreso", "estado",
+        )
+        # La comparación y la escritura son una única operación SQL. Comparar
+        # solamente en Python permitiría que otra transacción cambie la orden
+        # entre la comprobación y el UPDATE.
+        statement = (
+            update(OrdenTrabajoModel)
+            .where(
+                OrdenTrabajoModel.id == orden_id,
+                *(getattr(OrdenTrabajoModel, campo) == getattr(orden_original, campo)
+                  for campo in campos),
+            )
+            .values({campo: getattr(orden_actualizada, campo) for campo in campos})
+            .returning(OrdenTrabajoModel)
+        )
+        with SessionLocal.begin() as session:
+            model = session.scalar(statement)
+            if model is not None:
+                return self._to_domain(model)
+            if session.get(OrdenTrabajoModel, orden_id) is None:
                 return None
-
-            model.vehiculo_id = orden_actualizada.vehiculo_id
-            model.fecha_ingreso = orden_actualizada.fecha_ingreso
-            model.descripcion_problema = (
-                orden_actualizada.descripcion_problema
-            )
-            model.kilometraje_ingreso = (
-                orden_actualizada.kilometraje_ingreso
-            )
-            model.estado = orden_actualizada.estado
-
-            session.commit()
-            session.refresh(model)
-
-            orden_actualizada.id = model.id
-            return orden_actualizada
+            raise ConflictoOrdenTrabajo()
 
 
 orden_trabajo_repository_instance = OrdenTrabajoRepository()
