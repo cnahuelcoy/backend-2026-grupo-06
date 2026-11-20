@@ -1,6 +1,6 @@
 # Pruebas de la API
 
-El 20 de noviembre de 2026 pasaron las **50 pruebas** de la suite en Windows.
+El 20 de noviembre de 2026 pasaron las **52 pruebas** de la suite en Windows.
 Se revisan clientes, vehículos, órdenes y reparaciones.
 
 ## Ejecutar
@@ -20,7 +20,7 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 | test_integracion.py | 3 | Relaciones, paginación y persistencia al reiniciar la API. |
 | test_revision_final.py | 33 | Errores HTTP, validaciones, eliminaciones y reglas de negocio. |
 | test_dependencias_routers.py | 2 | Sustitución de los cuatro servicios y documentación OpenAPI. |
-| test_concurrencia_ordenes.py | 6 | Cambios simultáneos, actualizaciones sucesivas, orden finalizada, eliminación y PATCH vacío. |
+| test_concurrencia_ordenes.py | 8 | Cambios simultáneos, actualizaciones sucesivas, orden finalizada, eliminación, escritura parcial y PATCH vacío o null. |
 
 La suite usa SQLite temporal o servicios sustituidos. No modifica las tablas
 del taller. También comprueba errores JSON y respuestas 204 sin cuerpo.
@@ -28,14 +28,15 @@ del taller. También comprueba errores JSON y respuestas 204 sin cuerpo.
 
 ## Actualizaciones simultáneas de órdenes
 
-Antes, dos PATCH podían sobrescribirse. Ahora el guardado comprueba en una sola
-operación SQL que la orden no haya cambiado desde su lectura. Si cambió,
+Antes, dos PATCH podían sobrescribirse. Ahora el UPDATE escribe solo los campos
+enviados y comprueba que la orden no haya cambiado desde su lectura. Si cambió,
 responde 409 con "WORK_ORDER_CONCURRENT_UPDATE"; hay que consultar la orden
 antes de reenviar el cambio. Si fue eliminada, responde 404. No requiere migración.
 La protección cubre solicitudes simultáneas; no detecta formularios antiguos
 que se envían después de que terminó otra actualización.
+Un PATCH vacío o con solo valores null no ejecuta un UPDATE.
 
-Los seis casos pasaron también en PostgreSQL 17.11, usando esquemas temporales
+Los ocho casos pasaron también en PostgreSQL 17.11, usando esquemas temporales
 separados. No quedaron esquemas de prueba y se conservaron los 25 registros
 por tabla del taller.
 

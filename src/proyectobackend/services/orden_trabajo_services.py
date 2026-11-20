@@ -1,4 +1,3 @@
-from dataclasses import replace
 from typing import Literal
 
 from proyectobackend.domain.orden_trabajo import EstadoOrdenTrabajo, OrdenTrabajo
@@ -110,7 +109,7 @@ class OrdenTrabajoService:
 
         orden_actualizada = self.repository.actualizar(
             orden_id,
-            replace(orden, **cambios),
+            cambios,
             orden_original=orden,
         )
         if orden_actualizada is None:

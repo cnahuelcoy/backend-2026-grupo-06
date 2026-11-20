@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from fastapi import FastAPI
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateSchema, DropSchema
 from sqlalchemy.engine import make_url
@@ -177,3 +177,45 @@ class TestConcurrenciaOrdenes(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(estado, 200)
         self.assertEqual(cuerpo["estado"], "pendiente")
         self.assertEqual(cuerpo["kilometraje_ingreso"], 1000)
+
+    async def test_sql_actualiza_solo_el_campo_enviado(self):
+        sentencias = []
+        engine = self.sessions.kw["bind"]
+
+        def capturar(conexion, cursor, statement, parametros, contexto, muchos):
+            if statement.lstrip().upper().startswith("UPDATE "):
+                sentencias.append(statement)
+
+        event.listen(engine, "before_cursor_execute", capturar)
+        try:
+            estado, cuerpo = await self.actualizar({"kilometraje_ingreso": 2300})
+        finally:
+            event.remove(engine, "before_cursor_execute", capturar)
+        self.assertEqual(estado, 200)
+        self.assertEqual(cuerpo["kilometraje_ingreso"], 2300)
+        self.assertEqual(cuerpo["descripcion_problema"], "Revisar frenos")
+        self.assertEqual(len(sentencias), 1)
+        asignaciones = sentencias[0].split(" SET ", 1)[1].split(" WHERE ", 1)[0]
+        columnas = [a.split("=", 1)[0].strip().strip("\"")
+                    for a in asignaciones.split(",")]
+        self.assertEqual(columnas, ["kilometraje_ingreso"])
+
+    async def test_patch_vacio_o_null_no_ejecuta_update(self):
+        sentencias = []
+        engine = self.sessions.kw["bind"]
+
+        def capturar(conexion, cursor, statement, parametros, contexto, muchos):
+            if statement.lstrip().upper().startswith("UPDATE "):
+                sentencias.append(statement)
+
+        event.listen(engine, "before_cursor_execute", capturar)
+        try:
+            for datos in ({}, {"estado": None, "kilometraje_ingreso": None}):
+                with self.subTest(datos=datos):
+                    estado, cuerpo = await self.actualizar(datos)
+                    self.assertEqual(estado, 200)
+                    self.assertEqual(cuerpo["estado"], "pendiente")
+                    self.assertEqual(cuerpo["kilometraje_ingreso"], 1000)
+        finally:
+            event.remove(engine, "before_cursor_execute", capturar)
+        self.assertEqual(sentencias, [])

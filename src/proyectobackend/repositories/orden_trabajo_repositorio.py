@@ -59,9 +59,11 @@ class OrdenTrabajoRepository:
     def actualizar(
         self,
         orden_id: int,
-        orden_actualizada: OrdenTrabajo,
+        cambios: dict,
         orden_original: OrdenTrabajo,
     ) -> OrdenTrabajo | None:
+        if not cambios:
+            return self.buscar_por_id(orden_id)
         campos = (
             "vehiculo_id", "fecha_ingreso", "descripcion_problema",
             "kilometraje_ingreso", "estado",
@@ -76,7 +78,7 @@ class OrdenTrabajoRepository:
                 *(getattr(OrdenTrabajoModel, campo) == getattr(orden_original, campo)
                   for campo in campos),
             )
-            .values({campo: getattr(orden_actualizada, campo) for campo in campos})
+            .values(cambios)
             .returning(OrdenTrabajoModel)
         )
         with SessionLocal.begin() as session:
