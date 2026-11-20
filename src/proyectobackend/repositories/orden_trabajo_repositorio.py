@@ -1,7 +1,9 @@
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 
 from proyectobackend.database.session import SessionLocal
-from proyectobackend.domain.orden_trabajo import ConflictoOrdenTrabajo, OrdenTrabajo
+from proyectobackend.domain.orden_trabajo import (
+    ConflictoOrdenTrabajo, EstadoOrdenTrabajo, OrdenTrabajo,
+)
 from proyectobackend.models.orden_trabajo import OrdenTrabajoModel
 
 
@@ -55,6 +57,40 @@ class OrdenTrabajoRepository:
                 return None
 
             return self._to_domain(model)
+
+    def listar_paginado(
+        self,
+        estado: EstadoOrdenTrabajo | None = None,
+        ordenar_por: str = "id",
+        direccion: str = "asc",
+        pagina: int = 1,
+        limite: int = 10,
+    ) -> tuple[list[OrdenTrabajo], int]:
+        columnas = {
+            "id": OrdenTrabajoModel.id,
+            "fecha_ingreso": OrdenTrabajoModel.fecha_ingreso,
+            "kilometraje_ingreso": OrdenTrabajoModel.kilometraje_ingreso,
+        }
+        if ordenar_por not in columnas or direccion not in {"asc", "desc"}:
+            raise ValueError("Ordenamiento de órdenes inválido")
+        if pagina < 1 or not 1 <= limite <= 100:
+            raise ValueError("Paginación de órdenes inválida")
+        filtros = [] if estado is None else [OrdenTrabajoModel.estado == estado]
+        columna = columnas[ordenar_por]
+        orden = columna.desc() if direccion == "desc" else columna.asc()
+        with SessionLocal() as session:
+            total = session.scalar(
+                select(func.count()).select_from(OrdenTrabajoModel).where(*filtros)
+            )
+            statement = (
+                select(OrdenTrabajoModel)
+                .where(*filtros)
+                .order_by(orden, OrdenTrabajoModel.id.asc())
+                .limit(limite)
+                .offset((pagina - 1) * limite)
+            )
+            modelos = session.scalars(statement).all()
+            return [self._to_domain(model) for model in modelos], total
 
     def actualizar(
         self,

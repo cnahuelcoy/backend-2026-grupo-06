@@ -43,26 +43,14 @@ class OrdenTrabajoService:
         pagina: int = 1,
         limite: int = 10,
     ) -> OrdenTrabajoListadoResponse:
-        ordenes = self.repository.listar()
-
-        # Filtrar antes de ordenar y paginar.
-        if estado is not None:
-            ordenes = [
-                orden
-                for orden in ordenes
-                if orden.estado == estado
-            ]
-
-        ordenes = sorted(
-            ordenes,
-            key=lambda orden: getattr(orden, ordenar_por),
-            reverse=direccion == "desc",
+        ordenes_pagina, total = self.repository.listar_paginado(
+            estado=estado,
+            ordenar_por=ordenar_por,
+            direccion=direccion,
+            pagina=pagina,
+            limite=limite,
         )
-
-        total = len(ordenes)
         total_paginas = (total + limite - 1) // limite
-        inicio = (pagina - 1) * limite
-        ordenes_pagina = ordenes[inicio:inicio + limite]
 
         return OrdenTrabajoListadoResponse(
             items=[

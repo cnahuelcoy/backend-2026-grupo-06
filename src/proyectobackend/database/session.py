@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 
@@ -17,6 +17,18 @@ engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
 )
+
+def configurar_minusculas_sqlite(conexion, registro) -> None:
+    conexion.create_function(
+        "lower", 1,
+        lambda valor: valor.lower() if valor is not None else None,
+        deterministic=True,
+    )
+
+
+if engine.dialect.name == "sqlite":
+    event.listen(engine, "connect", configurar_minusculas_sqlite)
+
 
 SessionLocal = sessionmaker(
     bind=engine,
