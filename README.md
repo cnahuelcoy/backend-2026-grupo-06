@@ -82,6 +82,8 @@ backend-2026-grupo-06/
 **Organización principal:**
 
 - `routers/`: recibe las solicitudes HTTP y entrega las respuestas.
+- `routers/dependencies.py`: compone los cuatro servicios para inyectarlos con
+  `Depends`. Permite sustituirlos mediante `app.dependency_overrides` en pruebas.
 - `schemas/`: define los DTO y las validaciones con Pydantic.
 - `domain/`: contiene las entidades y reglas del dominio.
 - `services/`: implementa la lógica de negocio.
@@ -207,6 +209,24 @@ docker compose ps
 - **Swagger/OpenAPI:** http://localhost:8000/docs
 
 Desde Swagger se pueden consultar los endpoints, revisar los esquemas y realizar solicitudes directamente desde el navegador.
+
+### Consultar PostgreSQL desde VS Code o pgAdmin
+
+Crear una conexión **PostgreSQL** y abrir las tablas del esquema `public`:
+
+| Campo | Valor |
+|---|---|
+| Host | `127.0.0.1` |
+| Puerto | `15432` |
+| Base de datos | `POSTGRES_DB` de `.env` |
+| Usuario | `POSTGRES_USER` de `.env` |
+| Contraseña | `POSTGRES_PASSWORD` de `.env` |
+
+La API y Swagger usan `8000:8000`. PostgreSQL publica `15432:5432`;
+la API se conecta internamente a `db:5432`.
+El archivo SQLite `taller_mecanico.db` es una base distinta.
+
+Comprobaciones y seguimiento en [docs/retroalimentacion.md](docs/retroalimentacion.md).
 
 ### Detener el proyecto
 

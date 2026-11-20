@@ -1,12 +1,9 @@
 from typing import List
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
 
-from proyectobackend.repositories.cliente_repository import cliente_repo
-from proyectobackend.repositories.vehiculo_repository import (
-    vehiculo_repository_instance,
-)
+from proyectobackend.routers.dependencies import get_vehiculo_service
 from proyectobackend.schemas.error import ErrorDetail, ErrorResponse
 from proyectobackend.schemas.vehiculo import (
     VehiculoCreate,
@@ -22,11 +19,6 @@ router = APIRouter(
     responses={
         422: {"model": ErrorResponse},
     },
-)
-
-vehiculo_service = VehiculoService(
-    vehiculo_repository_instance,
-    cliente_repo,
 )
 
 
@@ -74,8 +66,17 @@ def _formatear_error(ex: Exception) -> JSONResponse:
         404: {"model": ErrorResponse},
         409: {"model": ErrorResponse},
     },
+    summary="Crear un vehículo",
+    description=(
+        "Registra patente de seis caracteres, marca, modelo, año, kilometraje "
+        "e ID de un cliente existente. Devuelve 404 si el cliente no existe y "
+        "409 si la patente está registrada."
+    ),
 )
-def crear_vehiculo(vehiculo: VehiculoCreate):
+def crear_vehiculo(
+    vehiculo: VehiculoCreate,
+    vehiculo_service: VehiculoService = Depends(get_vehiculo_service),
+):
     try:
         return vehiculo_service.crear_vehiculo(vehiculo)
 
@@ -87,8 +88,15 @@ def crear_vehiculo(vehiculo: VehiculoCreate):
     "/",
     response_model=List[VehiculoResponse],
     status_code=status.HTTP_200_OK,
+    summary="Listar vehículos",
+    description=(
+        "Devuelve los vehículos registrados. Cada elemento incluye su "
+        "identificador y el ID del cliente asociado."
+    ),
 )
-def listar_vehiculos():
+def listar_vehiculos(
+    vehiculo_service: VehiculoService = Depends(get_vehiculo_service),
+):
     return vehiculo_service.listar_vehiculos()
 
 
@@ -99,8 +107,16 @@ def listar_vehiculos():
     responses={
         404: {"model": ErrorResponse},
     },
+    summary="Obtener un vehículo por ID",
+    description=(
+        "Consulta un vehículo por su identificador numérico. Devuelve 404 si "
+        "no existe."
+    ),
 )
-def obtener_vehiculo(vehiculo_id: int):
+def obtener_vehiculo(
+    vehiculo_id: int,
+    vehiculo_service: VehiculoService = Depends(get_vehiculo_service),
+):
     try:
         return vehiculo_service.obtener_vehiculo_por_id(vehiculo_id)
 
@@ -116,10 +132,17 @@ def obtener_vehiculo(vehiculo_id: int):
         404: {"model": ErrorResponse},
         409: {"model": ErrorResponse},
     },
+    summary="Actualizar parcialmente un vehículo",
+    description=(
+        "Actualiza únicamente los campos enviados. Valida el cliente y la "
+        "unicidad de la patente; devuelve 404 si falta el vehículo o cliente "
+        "y 409 ante una patente duplicada."
+    ),
 )
 def actualizar_vehiculo(
     vehiculo_id: int,
     vehiculo_data: VehiculoUpdate,
+    vehiculo_service: VehiculoService = Depends(get_vehiculo_service),
 ):
     try:
         return vehiculo_service.actualizar_vehiculo(
@@ -138,8 +161,16 @@ def actualizar_vehiculo(
         404: {"model": ErrorResponse},
         409: {"model": ErrorResponse},
     },
+    summary="Eliminar un vehículo",
+    description=(
+        "Elimina un vehículo sin órdenes de trabajo y devuelve 204 sin "
+        "cuerpo. Devuelve 404 si no existe o 409 si tiene órdenes asociadas."
+    ),
 )
-def eliminar_vehiculo(vehiculo_id: int):
+def eliminar_vehiculo(
+    vehiculo_id: int,
+    vehiculo_service: VehiculoService = Depends(get_vehiculo_service),
+):
     try:
         vehiculo_service.eliminar_vehiculo(vehiculo_id)
 

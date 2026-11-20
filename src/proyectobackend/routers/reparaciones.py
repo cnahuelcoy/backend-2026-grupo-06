@@ -1,12 +1,7 @@
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
 
-from proyectobackend.repositories.orden_trabajo_repositorio import (
-    orden_trabajo_repository_instance,
-)
-from proyectobackend.repositories.reparacion_repository import (
-    reparacion_repository_instance,
-)
+from proyectobackend.routers.dependencies import get_reparacion_service
 from proyectobackend.schemas.error import ErrorDetail, ErrorResponse
 from proyectobackend.schemas.reparacion import (
     ReparacionCreate,
@@ -49,13 +44,6 @@ ERROR_404_REPARACION = {
     "model": ErrorResponse,
     "description": "No existe una reparación con el ID indicado.",
 }
-
-
-def get_reparacion_service() -> ReparacionService:
-    return ReparacionService(
-        repository=reparacion_repository_instance,
-        orden_repository=orden_trabajo_repository_instance,
-    )
 
 
 def parse_error_message(error: Exception) -> tuple[str, str]:
