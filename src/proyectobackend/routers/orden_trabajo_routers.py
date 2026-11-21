@@ -1,15 +1,10 @@
 from typing import Literal
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import JSONResponse
 
 from proyectobackend.domain.orden_trabajo import EstadoOrdenTrabajo
-from proyectobackend.repositories.orden_trabajo_repositorio import (
-    orden_trabajo_repository_instance,
-)
-from proyectobackend.repositories.vehiculo_repository import (
-    vehiculo_repository_instance,
-)
+from proyectobackend.routers.dependencies import get_orden_trabajo_service
 from proyectobackend.schemas.error import ErrorDetail, ErrorResponse
 from proyectobackend.schemas.orden_trabajo_schemas import (
     OrdenTrabajoCreate,
@@ -26,12 +21,6 @@ router = APIRouter(
     responses={
         422: {"model": ErrorResponse},
     },
-)
-
-repository = orden_trabajo_repository_instance
-service = OrdenTrabajoService(
-    repository,
-    vehiculo_repository_instance,
 )
 
 
@@ -61,8 +50,17 @@ def _respuesta_error(
     responses={
         404: {"model": ErrorResponse},
     },
+    summary="Crear una orden de trabajo",
+    description=(
+        "Registra vehículo, fecha de ingreso, descripción del problema y "
+        "kilometraje. El estado inicial es pendiente si se omite. Devuelve "
+        "404 si el vehículo no existe."
+    ),
 )
-def crear_orden_trabajo(datos: OrdenTrabajoCreate):
+def crear_orden_trabajo(
+    datos: OrdenTrabajoCreate,
+    service: OrdenTrabajoService = Depends(get_orden_trabajo_service),
+):
     try:
         return service.crear(datos)
     except LookupError as error:
@@ -79,8 +77,16 @@ def crear_orden_trabajo(datos: OrdenTrabajoCreate):
     responses={
         404: {"model": ErrorResponse},
     },
+    summary="Obtener una orden de trabajo por ID",
+    description=(
+        "Consulta una orden por su identificador numérico. Devuelve 404 si no "
+        "existe."
+    ),
 )
-def obtener_orden_trabajo(orden_id: int):
+def obtener_orden_trabajo(
+    orden_id: int,
+    service: OrdenTrabajoService = Depends(get_orden_trabajo_service),
+):
     try:
         return service.obtener_por_id(orden_id)
     except LookupError as error:
@@ -94,6 +100,12 @@ def obtener_orden_trabajo(orden_id: int):
     "",
     response_model=OrdenTrabajoListadoResponse,
     status_code=status.HTTP_200_OK,
+    summary="Listar órdenes de trabajo",
+    description=(
+        "Filtra por estado, ordena por ID, fecha o kilometraje de ingreso y "
+        "pagina el resultado. Devuelve items, total, página, límite y total "
+        "de páginas; el límite admite de 1 a 100 registros."
+    ),
 )
 def listar_ordenes_trabajo(
     estado: EstadoOrdenTrabajo | None = None,
@@ -105,6 +117,7 @@ def listar_ordenes_trabajo(
     direccion: Literal["asc", "desc"] = "asc",
     pagina: int = Query(default=1, ge=1),
     limite: int = Query(default=10, ge=1, le=100),
+    service: OrdenTrabajoService = Depends(get_orden_trabajo_service),
 ):
     return service.listar(
         estado=estado,
@@ -124,10 +137,18 @@ def listar_ordenes_trabajo(
         404: {"model": ErrorResponse},
         409: {"model": ErrorResponse},
     },
+    summary="Actualizar parcialmente una orden de trabajo",
+    description=(
+        "Actualiza solo los campos enviados y valida el vehículo asociado. "
+        "Devuelve 404 si falta la orden o el vehículo, 409 al intentar "
+        "reabrir una orden finalizada o si otra solicitud la modificó durante "
+        "la actualización. Ante un conflicto, vuelve a consultar la orden."
+    ),
 )
 def actualizar_orden_trabajo(
     orden_id: int,
     datos: OrdenTrabajoUpdate,
+    service: OrdenTrabajoService = Depends(get_orden_trabajo_service),
 ):
     try:
         return service.actualizar(
@@ -142,7 +163,7 @@ def actualizar_orden_trabajo(
     except ValueError as error:
         code = str(error).partition(":")[0]
 
-        if code == "INVALID_WORK_ORDER_STATE":
+        if code in {"INVALID_WORK_ORDER_STATE", "WORK_ORDER_CONCURRENT_UPDATE"}:
             return _respuesta_error(
                 error,
                 status.HTTP_409_CONFLICT,

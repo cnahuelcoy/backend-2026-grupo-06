@@ -55,6 +55,47 @@ class ClienteRepository:
 
             return self._to_domain(model)
 
+    def listar_paginado(
+        self,
+        nombre: str | None = None,
+        ordenar_por: str = "id",
+        direccion: str = "asc",
+        pagina: int = 1,
+        limite: int = 10,
+    ) -> tuple[list[Cliente], int]:
+        columnas = {
+            "id": ClienteModel.id,
+            "nombre": ClienteModel.nombre,
+            "apellido": ClienteModel.apellido,
+            "email": ClienteModel.email,
+        }
+        if ordenar_por not in columnas or direccion not in {"asc", "desc"}:
+            raise ValueError("Ordenamiento de clientes inválido")
+        if pagina < 1 or not 1 <= limite <= 100:
+            raise ValueError("Paginación de clientes inválida")
+        filtros = []
+        if nombre is not None:
+            filtros.append(func.lower(ClienteModel.nombre) == nombre.lower())
+
+        with SessionLocal() as session:
+            columna = columnas[ordenar_por]
+            if ordenar_por != "id":
+                intercalacion = "C" if session.get_bind().dialect.name == "postgresql" else "BINARY"
+                columna = columna.collate(intercalacion)
+            orden = columna.desc() if direccion == "desc" else columna.asc()
+            total = session.scalar(
+                select(func.count()).select_from(ClienteModel).where(*filtros)
+            )
+            statement = (
+                select(ClienteModel)
+                .where(*filtros)
+                .order_by(orden, ClienteModel.id.asc())
+                .limit(limite)
+                .offset((pagina - 1) * limite)
+            )
+            modelos = session.scalars(statement).all()
+            return [self._to_domain(model) for model in modelos], total
+
     def buscar_por_email(self, email: str) -> Cliente | None:
         with SessionLocal() as session:
             statement = select(ClienteModel).where(

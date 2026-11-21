@@ -43,26 +43,14 @@ class OrdenTrabajoService:
         pagina: int = 1,
         limite: int = 10,
     ) -> OrdenTrabajoListadoResponse:
-        ordenes = self.repository.listar()
-
-        # Filtrar antes de ordenar y paginar.
-        if estado is not None:
-            ordenes = [
-                orden
-                for orden in ordenes
-                if orden.estado == estado
-            ]
-
-        ordenes = sorted(
-            ordenes,
-            key=lambda orden: getattr(orden, ordenar_por),
-            reverse=direccion == "desc",
+        ordenes_pagina, total = self.repository.listar_paginado(
+            estado=estado,
+            ordenar_por=ordenar_por,
+            direccion=direccion,
+            pagina=pagina,
+            limite=limite,
         )
-
-        total = len(ordenes)
         total_paginas = (total + limite - 1) // limite
-        inicio = (pagina - 1) * limite
-        ordenes_pagina = ordenes[inicio:inicio + limite]
 
         return OrdenTrabajoListadoResponse(
             items=[
@@ -107,10 +95,11 @@ class OrdenTrabajoService:
         if estado_nuevo is not None:
             self._validar_transicion_estado(orden.estado, estado_nuevo)
 
-        for campo, valor in cambios.items():
-            setattr(orden, campo, valor)
-
-        orden_actualizada = self.repository.actualizar(orden_id, orden)
+        orden_actualizada = self.repository.actualizar(
+            orden_id,
+            cambios,
+            orden_original=orden,
+        )
         if orden_actualizada is None:
             raise LookupError(
                 f"WORK_ORDER_NOT_FOUND:No se encontró la orden de trabajo con ID {orden_id}"

@@ -82,6 +82,8 @@ backend-2026-grupo-06/
 **Organización principal:**
 
 - `routers/`: recibe las solicitudes HTTP y entrega las respuestas.
+- `routers/dependencies.py`: compone los cuatro servicios para inyectarlos con
+  `Depends`. Permite sustituirlos mediante `app.dependency_overrides` en pruebas.
 - `schemas/`: define los DTO y las validaciones con Pydantic.
 - `domain/`: contiene las entidades y reglas del dominio.
 - `services/`: implementa la lógica de negocio.
@@ -208,6 +210,24 @@ docker compose ps
 
 Desde Swagger se pueden consultar los endpoints, revisar los esquemas y realizar solicitudes directamente desde el navegador.
 
+### Consultar PostgreSQL desde VS Code o pgAdmin
+
+Crear una conexión **PostgreSQL** y abrir las tablas del esquema `public`:
+
+| Campo | Valor |
+|---|---|
+| Host | `127.0.0.1` |
+| Puerto | `15432` |
+| Base de datos | `POSTGRES_DB` de `.env` |
+| Usuario | `POSTGRES_USER` de `.env` |
+| Contraseña | `POSTGRES_PASSWORD` de `.env` |
+
+La API y Swagger usan `8000:8000`. PostgreSQL publica `15432:5432`;
+la API se conecta internamente a `db:5432`.
+El archivo SQLite `taller_mecanico.db` es una base distinta.
+
+Comprobaciones y seguimiento en [docs/retroalimentacion.md](docs/retroalimentacion.md).
+
 ### Detener el proyecto
 
 ```powershell
@@ -261,7 +281,7 @@ Estas pruebas y los datos utilizados se explican en [docs/seeders.md](docs/seede
 
 ## Pruebas automatizadas
 
-El proyecto cuenta con **42 pruebas automatizadas** utilizando `unittest`.
+El proyecto cuenta con **58 pruebas automatizadas** utilizando `unittest`.
 
 Las pruebas comprueban las operaciones de los cuatro módulos, validaciones de datos, códigos de respuesta HTTP, filtros, ordenamiento, paginación, relaciones entre entidades y persistencia después de reiniciar la API.
 
@@ -282,7 +302,7 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 **Resultado de la verificación realizada en Windows:**
 
 ```text
-Ran 42 tests in 54.947s
+Ran 58 tests in 62.429s
 
 OK
 ```
@@ -369,7 +389,11 @@ Los detalles de cada endpoint, sus parámetros, DTO y respuestas HTTP están dis
 
 ### Filtrado, ordenamiento y paginación
 
-Los listados de clientes y órdenes de trabajo permiten filtrar, ordenar y paginar los resultados.
+Clientes filtra por nombre exacto sin distinguir mayúsculas; Órdenes, por estado.
+SQL aplica filtro, orden y paginación, con desempate por ID ascendente.
+"pagina" empieza en 1 y "limite" admite de 1 a 100. "total" y "total_paginas"
+se calculan sobre los resultados filtrados. Una página fuera de rango devuelve
+"items" vacío; sin coincidencias, los totales son 0.
 
 Ejemplo de consulta de clientes:
 

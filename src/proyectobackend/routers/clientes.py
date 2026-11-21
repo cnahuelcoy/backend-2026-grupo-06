@@ -1,10 +1,10 @@
 
 from typing import Literal
 
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.responses import JSONResponse
 
-from proyectobackend.repositories.cliente_repository import cliente_repo
+from proyectobackend.routers.dependencies import get_cliente_service
 from proyectobackend.schemas.cliente import (
     ClienteCreate,
     ClienteListadoResponse,
@@ -22,9 +22,6 @@ router = APIRouter(
         422: {"model": ErrorResponse},
     },
 )
-
-repository = cliente_repo
-service = ClienteService(repository)
 
 
 def crear_error(
@@ -53,8 +50,15 @@ def crear_error(
     responses={
         409: {"model": ErrorResponse},
     },
+    description=(
+        "Registra nombre, apellido, teléfono, correo y dirección. El correo "
+        "debe ser único; devuelve 409 si ya está registrado."
+    ),
 )
-def crear_cliente(datos: ClienteCreate):
+def crear_cliente(
+    datos: ClienteCreate,
+    service: ClienteService = Depends(get_cliente_service),
+):
     try:
         return service.crear(datos)
     except ValueError as error:
@@ -90,6 +94,7 @@ def listar_clientes(
     direccion: Literal["asc", "desc"] = Query(default="asc"),
     pagina: int = Query(default=1, ge=1),
     limite: int = Query(default=10, ge=1, le=100),
+    service: ClienteService = Depends(get_cliente_service),
 ):
     return service.listar(
         nombre=nombre,
@@ -108,8 +113,15 @@ def listar_clientes(
     responses={
         404: {"model": ErrorResponse},
     },
+    description=(
+        "Consulta un cliente por su identificador numérico. Devuelve 404 si "
+        "no existe."
+    ),
 )
-def obtener_cliente(cliente_id: int):
+def obtener_cliente(
+    cliente_id: int,
+    service: ClienteService = Depends(get_cliente_service),
+):
     cliente = service.obtener_por_id(cliente_id)
 
     if cliente is None:
@@ -131,10 +143,16 @@ def obtener_cliente(cliente_id: int):
         404: {"model": ErrorResponse},
         409: {"model": ErrorResponse},
     },
+    description=(
+        "Modifica solo los campos enviados del cliente indicado. Conserva los "
+        "restantes; devuelve 404 si no existe y 409 si el correo pertenece a "
+        "otro cliente."
+    ),
 )
 def actualizar_cliente(
     cliente_id: int,
     datos: ClienteUpdate,
+    service: ClienteService = Depends(get_cliente_service),
 ):
     try:
         cliente = service.actualizar(cliente_id, datos)
@@ -163,8 +181,15 @@ def actualizar_cliente(
         404: {"model": ErrorResponse},
         409: {"model": ErrorResponse},
     },
+    description=(
+        "Elimina un cliente sin vehículos asociados y devuelve 204 sin "
+        "cuerpo. Devuelve 404 si no existe o 409 si todavía tiene vehículos."
+    ),
 )
-def eliminar_cliente(cliente_id: int):
+def eliminar_cliente(
+    cliente_id: int,
+    service: ClienteService = Depends(get_cliente_service),
+):
     try:
         eliminado = service.eliminar(cliente_id)
     except ValueError as error:

@@ -1,113 +1,75 @@
-# Pruebas de la API — Taller Mecánico
+# Pruebas de la API
 
-En esta etapa comprobamos los principales flujos de Clientes, Vehículos, Órdenes de Trabajo y Reparaciones. Las pruebas usan `unittest`, levantan una API de prueba y trabajan con una base SQLite temporal para no alterar los datos de PostgreSQL.
+El 20 de noviembre de 2026 pasaron las **58 pruebas** de la suite en Windows.
+Se revisan clientes, vehículos, órdenes y reparaciones.
 
-## Estado de la revisión
+## Ejecutar
 
-| Verificación | Resultado |
-|---|---|
-| Pruebas originales | 9 de 9 correctas |
-| Pruebas nuevas de revisión final | 33 de 33 correctas |
-| **Total en Windows** | **42 de 42 correctas** |
-| Tiempo de ejecución en Windows | 54,947 segundos |
-| Errores y fallos en esa ejecución | 0 |
-| Solicitudes de `docs/solicitudes.http` | 60 de 60 correctas, según la ejecución informada por Salinas |
-
-La ejecución local en Windows terminó con:
-
-```text
-Ran 42 tests in 54.947s
-
-OK
-```
-
-El resultado de las 60 solicitudes corresponde a la comprobación informada por el integrante a cargo. No se ejecutó de nuevo el archivo completo mediante REST Client en el computador de Windows durante esta revisión.
-
-## Cómo ejecutar las pruebas
-
-Desde la raíz del repositorio, con las dependencias instaladas mediante `uv`:
+Desde la raíz del proyecto:
 
 ```powershell
 uv sync --frozen
 uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tests -t . -v
 ```
 
-En Linux, con el entorno virtual creado:
+## Casos comprobados
 
-```bash
-.venv/bin/python -B -W error::ResourceWarning -m unittest discover -s tests -t . -v
+| Archivo en tests/ | Pruebas | Qué revisa |
+|---|---:|---|
+| test_clientes.py | 6 | Altas, consultas, cambios y validación de clientes. |
+| test_integracion.py | 3 | Relaciones, paginación y persistencia al reiniciar la API. |
+| test_revision_final.py | 33 | Errores HTTP, validaciones, eliminaciones y reglas de negocio. |
+| test_dependencias_routers.py | 2 | Sustitución de los cuatro servicios y documentación OpenAPI. |
+| test_concurrencia_ordenes.py | 8 | Cambios simultáneos, actualizaciones sucesivas, orden finalizada, eliminación, escritura parcial y PATCH vacío o null. |
+| test_paginacion_sql.py | 6 | Filtros, orden, desempates por ID, límites, páginas vacías, totales y consultas SQL. |
+
+La suite usa SQLite temporal o servicios sustituidos. No modifica las tablas
+del taller. También comprueba errores JSON y respuestas 204 sin cuerpo.
+Órdenes no tiene endpoint DELETE; se comprueban los métodos que sí implementa.
+
+## Actualizaciones simultáneas de órdenes
+
+Antes, dos PATCH podían sobrescribirse. Ahora el UPDATE escribe solo los campos
+enviados y comprueba que la orden no haya cambiado desde su lectura. Si cambió,
+responde 409 con "WORK_ORDER_CONCURRENT_UPDATE"; hay que consultar la orden
+antes de reenviar el cambio. Si fue eliminada, responde 404. No requiere migración.
+La protección cubre solicitudes simultáneas; no detecta formularios antiguos
+que se envían después de que terminó otra actualización.
+Un PATCH vacío o con solo valores null no ejecuta un UPDATE.
+
+Los ocho casos pasaron también en PostgreSQL 17.11, usando esquemas temporales
+separados. No quedaron esquemas de prueba y se conservaron los 25 registros
+por tabla del taller.
+
+Para repetirlos, definir "TEST_ORDENES_POSTGRES_URL" con una URL
+"postgresql+psycopg://usuario:clave@host:puerto/base" de pruebas y ejecutar:
+
+```powershell
+uv run --no-sync python -m unittest tests.test_concurrencia_ordenes -v
 ```
 
-Los tests están distribuidos en `tests/test_clientes.py` (6), `tests/test_integracion.py` (3) y `tests/test_revision_final.py` (33). El soporte para iniciar y detener la API está en `tests/soporte_api.py`.
+Cada caso crea y elimina su esquema "test_ordenes_<uuid>"; no usa las tablas
+de "public". La conexión necesita permiso para crear esos esquemas.
 
-## Qué comprobamos
+## Comprobaciones anteriores
 
-| Área | Casos revisados | Respuesta esperada |
-|---|---|---|
-| Clientes | Crear, consultar, actualizar y eliminar; correo duplicado; datos inválidos | `201`, `200`, `204`, `409`, `422` |
-| Vehículos | CRUD, patente duplicada, cliente inexistente, eliminación con órdenes relacionadas | `201`, `200`, `204`, `404`, `409`, `422` |
-| Órdenes de Trabajo | Creación y actualización, consultas, filtros, ordenamiento, paginación, reapertura de una orden finalizada | `201`, `200`, `404`, `409`, `422` |
-| Reparaciones | Creación, consultas, actualización, eliminación, fechas futuras y datos inválidos | `201`, `200`, `204`, `400`, `404`, `422` |
-| Integración | Relaciones Cliente → Vehículo → Orden → Reparación y persistencia tras reiniciar la API | Datos y relaciones conservados |
-| Aislamiento | Uso de SQLite temporal, claves foráneas activas, separación de bases y limpieza de archivos | Sin modificar PostgreSQL |
+El [PR #36](https://github.com/cnahuelcoy/backend-2026-grupo-06/pull/36) corrigió
+el error 500 al eliminar vehículos con órdenes: ahora responde 409 con
+"VEHICLE_HAS_WORK_ORDERS" y conserva los registros relacionados.
+También se corrigieron los bloqueos de archivos temporales en
+"tests/soporte_api.py". Sus pruebas siguen en la suite.
 
-También se comprueban respuestas JSON para los errores y cuerpos vacíos en los `DELETE` exitosos con HTTP `204`. Los métodos individuales y sus aserciones pueden revisarse directamente en `tests/test_revision_final.py`.
+El archivo [solicitudes.http](solicitudes.http) contiene 60 solicitudes para
+REST Client. Salinas informó que pasaron; no se repitió esa secuencia manual
+en esta revisión. Las instrucciones están en el
+[README](../README.md#pruebas-http-con-rest-client). Usar la API temporal,
+porque esas solicitudes crean, modifican y eliminan registros.
 
-**Nota:** Órdenes de Trabajo no implementa `DELETE`; por eso no se inventó ese endpoint para completar la cobertura.
+Las seis pruebas de paginación pasaron también en PostgreSQL 17.11.
+Comprueban respuestas equivalentes, totales, orden estable y lectura solo de la página.
+Usan esquemas temporales que se eliminan al terminar. Para repetirlas, definir
+"TEST_PAGINACION_POSTGRES_URL" y ejecutar:
 
-## Incidencias encontradas y corregidas
-
-### 1. Eliminación de vehículos con órdenes asociadas
-
-Durante la revisión inicial, `DELETE /vehiculos/{id}` devolvía `500 Internal Server Error` al intentar eliminar un vehículo que tenía una orden asociada. La causa fue una excepción `IntegrityError` de SQLAlchemy sin manejo específico.
-
-La corrección incorporada mediante el [PR #36](https://github.com/cnahuelcoy/backend-2026-grupo-06/pull/36) modificó:
-
-- `src/proyectobackend/repositories/vehiculo_repository.py`: comprueba las órdenes asociadas y ejecuta `rollback` si se produce un conflicto de integridad.
-- `src/proyectobackend/routers/vehiculos.py`: devuelve HTTP `409` con el código `VEHICLE_HAS_WORK_ORDERS` y una respuesta JSON controlada.
-
-Después de la corrección, la prueba `test_delete_vehiculo_con_ordenes_409_json_conserva_cadena` terminó con `ok` en Windows. Se comprobó que permanecieran el cliente, el vehículo, la orden y la reparación.
-
-### 2. Limpieza de archivos temporales en Windows
-
-La primera ejecución de la suite ampliada en Windows realizó **42 pruebas, con 9 errores de limpieza**. Los errores fueron `PermissionError: [WinError 32]`: Windows mantenía abiertos archivos como `api.log` o `taller_mecanico.db` durante la eliminación de carpetas temporales.
-
-Se corrigió `tests/soporte_api.py` para esperar el cierre del proceso y reintentar la limpieza cuando Windows informa ese bloqueo. Los errores persistentes siguen notificándose en lugar de ocultarse. La siguiente ejecución terminó con **42 pruebas correctas y 0 errores**.
-
-Estos dos problemas se conservan aquí como parte de la revisión; **no están pendientes en la ejecución de Windows informada arriba**.
-
-## Archivo de solicitudes HTTP
-
-`docs/solicitudes.http` incluye **60 solicitudes** para los cuatro módulos, con operaciones exitosas y errores esperados. Se pueden ejecutar con la extensión [REST Client para Visual Studio Code](https://github.com/Huachao/vscode-restclient).
-
-1. Iniciar la API temporal con el soporte de pruebas, desde la raíz del repositorio:
-
-   ```powershell
-   @'
-   from threading import Event
-   from tests.soporte_api import ApiDePrueba
-
-   with ApiDePrueba() as api:
-       print(f"@baseUrl = {api.url}", flush=True)
-       try:
-           Event().wait()
-       except KeyboardInterrupt:
-           pass
-   '@ | uv run --no-sync python -B -
-   ```
-
-2. Copiar la URL local que aparezca en la terminal y reemplazar `@baseUrl` al inicio de `docs/solicitudes.http`. El puerto `1` es solo un marcador.
-3. Ejecutar las solicitudes en el orden indicado mediante **Send Request**. Las variables `{{clienteId}}`, `{{vehiculoId}}`, `{{ordenId}}` y `{{reparacionId}}` toman los identificadores de respuestas anteriores.
-4. Detener la API temporal con `Ctrl+C` y volver a iniciarla desde una base vacía antes de repetir toda la secuencia.
-
-**Importante:** usar únicamente la API temporal. Las solicitudes incluyen altas, cambios y eliminaciones; no deben ejecutarse contra PostgreSQL compartido ni contra el contenedor Docker que tenga datos del equipo.
-
-## Base de datos utilizada
-
-Las pruebas automatizadas crean bases SQLite independientes en directorios temporales. El soporte comprueba la ruta de la base y habilita las claves foráneas; no utiliza las credenciales de PostgreSQL. También se probaron los reinicios de la API para verificar que los registros y las relaciones persistan dentro de la misma base temporal.
-
-Esto permite afirmar que la **suite de pruebas automatizadas se ejecutó aislada de PostgreSQL**. No equivale a una auditoría completa de PostgreSQL o Docker: esas comprobaciones se documentan por separado en [`docs/seeders.md`](seeders.md).
-
-## Resultado
-
-**APROBADO en los escenarios ejecutados.** Las 42 pruebas automatizadas pasaron en Windows. La ejecución de las 60 solicitudes fue informada como satisfactoria por Salinas. La documentación conserva los fallos iniciales y sus correcciones para dejar trazabilidad del trabajo.
+```powershell
+uv run --no-sync python -m unittest tests.test_paginacion_sql -v
+```
