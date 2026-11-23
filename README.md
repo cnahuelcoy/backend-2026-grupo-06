@@ -105,6 +105,19 @@ Esta separación permite mantener las rutas independientes de la lógica de nego
 
 La persistencia se realiza mediante SQLAlchemy, utilizando PostgreSQL en Docker y SQLite como alternativa para desarrollo local y pruebas.
 
+Un ejemplo de recorrido es "PATCH /ordenes-trabajo/1" con
+`{"kilometraje_ingreso": 30000}`, sobre una base de prueba con el seeder:
+
+| Paso | Archivo dentro de src/proyectobackend/ |
+|---|---|
+| Valida el DTO y recibe el PATCH | schemas/orden_trabajo_schemas.py y routers/orden_trabajo_routers.py |
+| Inyecta OrdenTrabajoService | routers/dependencies.py |
+| Comprueba la orden y sus reglas | services/orden_trabajo_services.py, método actualizar |
+| Guarda los campos enviados y detecta conflictos | repositories/orden_trabajo_repositorio.py, método actualizar |
+
+El router devuelve 200 con la orden, 404 si no existe y 409 si hay un conflicto.
+Los diagramas siguientes muestran las mismas capas.
+
 ## Diagramas del sistema
 
 ### UML de clases
@@ -167,40 +180,37 @@ Crear el archivo de variables de entorno:
 Copy-Item .env.example .env
 ```
 
-Editar `.env` y reemplazar `POSTGRES_PASSWORD` por una contraseña propia.
+Configurar las variables de `.env`:
 
-El archivo `.env` está excluido de Git para evitar publicar credenciales.
+| Variable | Uso |
+|---|---|
+| POSTGRES_USER | Usuario de PostgreSQL. |
+| POSTGRES_PASSWORD | Contraseña propia; este Compose admite directamente letras, números y guiones. |
+| POSTGRES_DB | Nombre de la base del taller. |
+
+No publicar `.env`. La API recibe `DATABASE_URL` desde Compose; no necesita
+configurarse por separado. Para ejecutar con Docker no hace falta instalar
+Python ni `uv` en el computador.
 
 ### Iniciar el proyecto por primera vez
 
-Construir la imagen:
+Con Docker Desktop iniciado, ejecutar en este orden sobre una base nueva:
 
 ```powershell
-docker compose build
-```
-
-Iniciar PostgreSQL:
-
-```powershell
-docker compose up -d db
-```
-
-Aplicar la migración inicial sobre una base de datos nueva:
-
-```powershell
+docker compose build backend
+docker compose up -d --wait db
 docker compose run --rm backend uv run --no-sync alembic upgrade head
-```
-
-Iniciar la API:
-
-```powershell
+docker compose run --rm backend uv run --no-sync python scripts/seed_db.py
 docker compose up -d backend
+docker compose ps
 ```
 
-Comprobar los contenedores:
+Se esperan dos registros iniciales por tabla. El seeder se puede repetir sin
+duplicarlos. En una base existente, revisar las migraciones antes de aplicar
+estos pasos; no borrar el volumen. Para revisar fallos de arranque:
 
 ```powershell
-docker compose ps
+docker compose logs --tail 50 backend db
 ```
 
 ### Acceder a la API
@@ -226,7 +236,21 @@ La API y Swagger usan `8000:8000`. PostgreSQL publica `15432:5432`;
 la API se conecta internamente a `db:5432`.
 El archivo SQLite `taller_mecanico.db` es una base distinta.
 
-Comprobaciones y seguimiento en [docs/retroalimentacion.md](docs/retroalimentacion.md).
+En la extensión de PostgreSQL de VS Code, crear la conexión con esos valores,
+expandir "public" y abrir una consulta SQL. Ejecutar también desde pgAdmin si
+se prefiere ese visor; no abrir el archivo SQLite para consultar PostgreSQL.
+
+```sql
+SELECT current_database(), current_user;
+SELECT (SELECT count(*) FROM clientes) AS clientes,
+       (SELECT count(*) FROM vehiculos) AS vehiculos,
+       (SELECT count(*) FROM ordenes_trabajo) AS ordenes,
+       (SELECT count(*) FROM reparaciones) AS reparaciones;
+```
+
+Una instalación nueva con el seeder devuelve 2 por tabla. La base del equipo
+puede tener más registros. Comprobar también "GET /clientes" en Swagger.
+Evidencias en [docs/retroalimentacion.md](docs/retroalimentacion.md).
 
 ### Detener el proyecto
 
@@ -307,7 +331,8 @@ Ran 60 tests in 127.804s
 OK
 ```
 
-Las pruebas utilizan bases SQLite temporales y aisladas, por lo que no modifican los datos de PostgreSQL.
+Por defecto, la suite usa SQLite temporal o servicios sustituidos. El caso de
+reinicio con Docker es opcional y usa contenedores aislados; ver docs/pruebas.md.
 
 También se pueden ejecutar desde Docker:
 
@@ -315,7 +340,16 @@ También se pueden ejecutar desde Docker:
 docker compose exec backend uv run --no-sync python -B -m unittest discover -s tests -t . -v
 ```
 
-El detalle de los casos probados se encuentra en [docs/pruebas.md](docs/pruebas.md).
+Para ejecutar solo las comprobaciones de paginación y concurrencia:
+
+```powershell
+uv run --no-sync python -m unittest tests.test_paginacion_sql tests.test_concurrencia_ordenes -v
+```
+
+El detalle y la activación del caso Docker están en [docs/pruebas.md](docs/pruebas.md).
+Las cuentas, autenticación, CI, linter, formato y despliegue institucional se
+integrarán en sus tarjetas posteriores; aún no tienen comandos ni credenciales
+de uso en este README.
 
 ## Pruebas HTTP con REST Client
 
