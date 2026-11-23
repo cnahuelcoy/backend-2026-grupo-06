@@ -281,7 +281,7 @@ Estas pruebas y los datos utilizados se explican en [docs/seeders.md](docs/seede
 
 ## Pruebas automatizadas
 
-El proyecto cuenta con **58 pruebas automatizadas** utilizando `unittest`.
+El proyecto cuenta con **60 pruebas automatizadas** utilizando `unittest`.
 
 Las pruebas comprueban las operaciones de los cuatro módulos, validaciones de datos, códigos de respuesta HTTP, filtros, ordenamiento, paginación, relaciones entre entidades y persistencia después de reiniciar la API.
 
@@ -299,10 +299,10 @@ Ejecutar las pruebas:
 uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tests -t . -v
 ```
 
-**Resultado de la verificación realizada en Windows:**
+**Resultado de la verificación en Windows con la prueba Docker habilitada:**
 
 ```text
-Ran 58 tests in 62.429s
+Ran 60 tests in 127.804s
 
 OK
 ```

@@ -1,6 +1,6 @@
 # Pruebas de la API
 
-El 20 de noviembre de 2026 pasaron las **58 pruebas** de la suite en Windows.
+El 23 de noviembre de 2026 pasaron las **60 pruebas**, con la prueba Docker habilitada.
 Se revisan clientes, vehículos, órdenes y reparaciones.
 
 ## Ejecutar
@@ -21,11 +21,23 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 | test_revision_final.py | 33 | Errores HTTP, validaciones, eliminaciones y reglas de negocio. |
 | test_dependencias_routers.py | 2 | Sustitución de los cuatro servicios y documentación OpenAPI. |
 | test_concurrencia_ordenes.py | 8 | Cambios simultáneos, actualizaciones sucesivas, orden finalizada, eliminación, escritura parcial y PATCH vacío o null. |
+| test_reconexion_bd.py | 2 | Conexión cerrada y primera consulta tras dos reinicios de PostgreSQL, sin reiniciar la API. |
 | test_paginacion_sql.py | 6 | Filtros, orden, desempates por ID, límites, páginas vacías, totales y consultas SQL. |
 
 La suite usa SQLite temporal o servicios sustituidos. No modifica las tablas
 del taller. También comprueba errores JSON y respuestas 204 sin cuerpo.
 Órdenes no tiene endpoint DELETE; se comprueban los métodos que sí implementa.
+
+La reconexión usa "pool_pre_ping" para descartar conexiones cerradas al
+reutilizarlas. La prueba Docker usa contenedores y una red temporales, sin
+reiniciar la base del taller. Requiere las imágenes "postgres:17-alpine" y
+"proyectobackend-backend"; sin la variable indicada se omite ese caso:
+
+```powershell
+$env:TEST_RECONEXION_DOCKER = "1"
+uv run --no-sync python -m unittest tests.test_reconexion_bd -v
+Remove-Item Env:TEST_RECONEXION_DOCKER
+```
 
 ## Actualizaciones simultáneas de órdenes
 
