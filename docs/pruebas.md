@@ -1,6 +1,6 @@
 # Pruebas de la API
 
-El 23 de noviembre de 2026 pasaron las **54 pruebas**, con la prueba Docker habilitada.
+El 23 de noviembre de 2026 pasaron las **60 pruebas**, con la prueba Docker habilitada.
 Se revisan clientes, vehículos, órdenes y reparaciones.
 
 ## Ejecutar
@@ -22,6 +22,7 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 | test_dependencias_routers.py | 2 | Sustitución de los cuatro servicios y documentación OpenAPI. |
 | test_concurrencia_ordenes.py | 8 | Cambios simultáneos, actualizaciones sucesivas, orden finalizada, eliminación, escritura parcial y PATCH vacío o null. |
 | test_reconexion_bd.py | 2 | Conexión cerrada y primera consulta tras dos reinicios de PostgreSQL, sin reiniciar la API. |
+| test_paginacion_sql.py | 6 | Filtros, orden, desempates por ID, límites, páginas vacías, totales y consultas SQL. |
 
 La suite usa SQLite temporal o servicios sustituidos. No modifica las tablas
 del taller. También comprueba errores JSON y respuestas 204 sin cuerpo.
@@ -75,3 +76,12 @@ REST Client. Salinas informó que pasaron; no se repitió esa secuencia manual
 en esta revisión. Las instrucciones están en el
 [README](../README.md#pruebas-http-con-rest-client). Usar la API temporal,
 porque esas solicitudes crean, modifican y eliminan registros.
+
+Las seis pruebas de paginación pasaron también en PostgreSQL 17.11.
+Comprueban respuestas equivalentes, totales, orden estable y lectura solo de la página.
+Usan esquemas temporales que se eliminan al terminar. Para repetirlas, definir
+"TEST_PAGINACION_POSTGRES_URL" y ejecutar:
+
+```powershell
+uv run --no-sync python -m unittest tests.test_paginacion_sql -v
+```

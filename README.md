@@ -281,7 +281,7 @@ Estas pruebas y los datos utilizados se explican en [docs/seeders.md](docs/seede
 
 ## Pruebas automatizadas
 
-El proyecto cuenta con **54 pruebas automatizadas** utilizando `unittest`.
+El proyecto cuenta con **60 pruebas automatizadas** utilizando `unittest`.
 
 Las pruebas comprueban las operaciones de los cuatro módulos, validaciones de datos, códigos de respuesta HTTP, filtros, ordenamiento, paginación, relaciones entre entidades y persistencia después de reiniciar la API.
 
@@ -302,7 +302,7 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 **Resultado de la verificación en Windows con la prueba Docker habilitada:**
 
 ```text
-Ran 54 tests in 123.911s
+Ran 60 tests in 127.804s
 
 OK
 ```
@@ -389,7 +389,11 @@ Los detalles de cada endpoint, sus parámetros, DTO y respuestas HTTP están dis
 
 ### Filtrado, ordenamiento y paginación
 
-Los listados de clientes y órdenes de trabajo permiten filtrar, ordenar y paginar los resultados.
+Clientes filtra por nombre exacto sin distinguir mayúsculas; Órdenes, por estado.
+SQL aplica filtro, orden y paginación, con desempate por ID ascendente.
+"pagina" empieza en 1 y "limite" admite de 1 a 100. "total" y "total_paginas"
+se calculan sobre los resultados filtrados. Una página fuera de rango devuelve
+"items" vacío; sin coincidencias, los totales son 0.
 
 Ejemplo de consulta de clientes:
 

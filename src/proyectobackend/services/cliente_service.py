@@ -1,5 +1,3 @@
-import math
-
 from proyectobackend.domain.cliente import Cliente
 from proyectobackend.repositories.cliente_repository import ClienteRepository
 from proyectobackend.schemas.cliente import ClienteCreate, ClienteUpdate
@@ -34,35 +32,14 @@ class ClienteService:
         pagina: int = 1,
         limite: int = 10,
     ) -> dict:
-        clientes = self._repository.listar()
-
-        # 1. FILTRAR
-        if nombre is not None:
-            clientes = [
-                cliente
-                for cliente in clientes
-                if cliente.nombre.lower() == nombre.lower()
-            ]
-
-        # 2. ORDENAR
-        descendente = direccion == "desc"
-
-        clientes = sorted(
-            clientes,
-            key=lambda cliente: getattr(cliente, ordenar_por),
-            reverse=descendente,
+        items, total = self._repository.listar_paginado(
+            nombre=nombre,
+            ordenar_por=ordenar_por,
+            direccion=direccion,
+            pagina=pagina,
+            limite=limite,
         )
-
-        # Total después de filtrar, pero antes de paginar
-        total = len(clientes)
-
-        # 3. PAGINAR
-        inicio = (pagina - 1) * limite
-        fin = inicio + limite
-
-        items = clientes[inicio:fin]
-
-        total_paginas = math.ceil(total / limite) if total > 0 else 0
+        total_paginas = (total + limite - 1) // limite
 
         return {
             "items": items,
