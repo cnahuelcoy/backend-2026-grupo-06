@@ -4,6 +4,8 @@ from proyectobackend.models.cliente import ClienteModel
 from proyectobackend.models.orden_trabajo import OrdenTrabajoModel
 from proyectobackend.models.reparacion import ReparacionModel
 from proyectobackend.models.vehiculo import VehiculoModel
+from proyectobackend.models.usuario import UsuarioModel
+from proyectobackend.models.sesion import SesionModel
 
 
 def init_db() -> None:

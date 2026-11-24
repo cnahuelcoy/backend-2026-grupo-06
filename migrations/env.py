@@ -7,7 +7,7 @@ from alembic import context
 
 from proyectobackend.database.base import Base
 from proyectobackend.database.session import DATABASE_URL
-from proyectobackend.models import cliente, orden_trabajo, reparacion, vehiculo
+from proyectobackend.models import cliente, orden_trabajo, reparacion, sesion, usuario, vehiculo
 
 # objeto de configuración de Alembic, lee los valores de alembic.ini
 config = context.config
