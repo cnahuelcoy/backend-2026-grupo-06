@@ -1,7 +1,7 @@
 # Seguimiento de la retroalimentación
 
-Revisión del 20 de noviembre de 2026. Correcciones en el commit `381d053`
-de la rama `cnahuelcoy`.
+Revisión documental del 23 de noviembre de 2026 sobre `9f97c20`, rama `cnahuelcoy`.
+Las primeras correcciones se registraron en `381d053`.
 
 | ID | Observación | Cambio y evidencia | Estado |
 |---|---|---|---|
@@ -15,8 +15,7 @@ de la rama `cnahuelcoy`.
 
 ## Evidencia de verificación
 
-- **44 pruebas aprobadas**, con SQLite temporal o servicios sustituidos; incluye
-  `tests/test_dependencias_routers.py`.
+- **60 pruebas aprobadas** en la revisión de `9f97c20`, con el caso Docker habilitado.
 - Contrato OpenAPI conservado, salvo los resúmenes y descripciones agregados.
 - Imagen Docker reconstruida; los cuatro listados y Swagger responden `200`.
 - **25 clientes, 25 vehículos, 25 órdenes y 25 reparaciones**: todos sus campos
@@ -28,3 +27,10 @@ de la rama `cnahuelcoy`.
 
 Para repetir la suite: `uv run --no-sync python -m unittest discover -v`.
 Conexión y arranque: [README](../README.md#instalación-y-ejecución-con-docker).
+
+El 23 de noviembre se comprobó el README desde una copia limpia del código,
+con puertos alternativos y volumen temporal para no ocupar los del equipo.
+Migración 0001, seeder repetible sin duplicados, Swagger y PATCH de órdenes
+respondieron correctamente. La conexión SQL externa mostró 2 filas por tabla;
+el PATCH persistió al reiniciar la API. El entorno temporal se eliminó al terminar.
+La configuración manual de la extensión de VS Code no se verificó en esa prueba.
