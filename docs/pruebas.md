@@ -1,7 +1,8 @@
 # Pruebas de la API
 
-El 23 de noviembre de 2026 pasaron las **60 pruebas**, con la prueba Docker habilitada.
-Se revisan clientes, vehículos, órdenes y reparaciones.
+La suite incluye **74 pruebas** de negocio, persistencia y base de autenticación.
+El 24 de noviembre pasaron las 74 con Docker habilitado y las 14 nuevas también
+en PostgreSQL aislado. Los esquemas y contenedores de prueba se eliminaron.
 
 ## Ejecutar
 
@@ -23,10 +24,16 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 | test_concurrencia_ordenes.py | 8 | Cambios simultáneos, actualizaciones sucesivas, orden finalizada, eliminación, escritura parcial y PATCH vacío o null. |
 | test_reconexion_bd.py | 2 | Conexión cerrada y primera consulta tras dos reinicios de PostgreSQL, sin reiniciar la API. |
 | test_paginacion_sql.py | 6 | Filtros, orden, desempates por ID, límites, páginas vacías, totales y consultas SQL. |
+| test_usuarios_sesiones.py | 14 | Migración, unicidad, DTO, roles, consumo simultáneo, revocación y rollback. |
 
 La suite usa SQLite temporal o servicios sustituidos. No modifica las tablas
 del taller. También comprueba errores JSON y respuestas 204 sin cuerpo.
 Órdenes no tiene endpoint DELETE; se comprueban los métodos que sí implementa.
+
+Usuarios/sesiones también se verifica con "TEST_USUARIOS_POSTGRES_URL" apuntando
+a una BD de prueba: `uv run --no-sync python -m unittest tests.test_usuarios_sesiones -v`.
+Crea esquemas aislados, aplica Alembic y los elimina al terminar. La migración
+se prueba desde cero y desde "0001" con 25 registros por tabla del taller.
 
 La reconexión usa "pool_pre_ping" para descartar conexiones cerradas al
 reutilizarlas. La prueba Docker usa contenedores y una red temporales, sin

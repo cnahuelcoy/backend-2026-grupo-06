@@ -47,7 +47,8 @@ backend-2026-grupo-06/
 │   └── solicitudes.http
 ├── migrations/
 │   ├── versions/
-│   │   └── 0001_esquema_inicial.py
+│   │   ├── 0001_esquema_inicial.py
+│   │   └── 0002_usuarios_sesiones.py
 │   ├── env.py
 │   └── script.py.mako
 ├── scripts/
@@ -253,9 +254,9 @@ docker compose exec backend uv run --no-sync alembic current
 docker compose exec backend uv run --no-sync alembic check
 ```
 
-En una instalación correctamente migrada se espera la versión `0001 (head)` y el mensaje `No new upgrade operations detected.`.
+La revisión `0002` añade usuarios y sesiones. Se espera `0002 (head)` y el mensaje `No new upgrade operations detected.`. El [contrato de autenticación](docs/autenticacion.md) prepara el login y JWT de la siguiente tarea.
 
-Si las tablas ya existían antes de configurar Alembic, es necesario respaldar y revisar la base antes de utilizar `alembic stamp head`.
+Si las tablas ya existían sin historial de Alembic, respaldar y revisar el esquema siguiendo [migraciones.md](docs/migraciones.md#si-la-base-ya-fue-creada-con-create_all).
 
 Más información en [docs/migraciones.md](docs/migraciones.md).
 
@@ -281,7 +282,7 @@ Estas pruebas y los datos utilizados se explican en [docs/seeders.md](docs/seede
 
 ## Pruebas automatizadas
 
-El proyecto cuenta con **60 pruebas automatizadas** utilizando `unittest`.
+El proyecto cuenta con **74 pruebas automatizadas** utilizando `unittest`.
 
 Las pruebas comprueban las operaciones de los cuatro módulos, validaciones de datos, códigos de respuesta HTTP, filtros, ordenamiento, paginación, relaciones entre entidades y persistencia después de reiniciar la API.
 
@@ -302,7 +303,7 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 **Resultado de la verificación en Windows con la prueba Docker habilitada:**
 
 ```text
-Ran 60 tests in 127.804s
+Ran 74 tests
 
 OK
 ```
