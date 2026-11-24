@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import StrEnum
 import re
 
@@ -23,6 +24,8 @@ class Usuario:
     rol: RolUsuario = RolUsuario.OPERADOR
     activo: bool = True
     version_tokens: int = 0
+    intentos_fallidos: int = 0
+    bloqueado_hasta: datetime | None = None
 
 
 class EmailUsuarioDuplicado(ValueError):

@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 from pathlib import Path
 import subprocess
 import sys
@@ -72,7 +73,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as conexion:
 
 
 class ApiDePrueba:
-    def __init__(self) -> None:
+    def __init__(self, autenticar: bool = True, admin_email: str = "", admin_password: str = "") -> None:
         self._temporal = TemporaryDirectory(prefix="parte5-api")
         self.directorio = Path(self._temporal.name)
         self.base_de_datos = self.directorio / "taller_mecanico.db"
@@ -81,6 +82,12 @@ class ApiDePrueba:
         self._url: str | None = None
         self._cerrada = False
         self.ultimo_content_type: str | None = None
+        self.autenticar = autenticar
+        self.admin_email = admin_email
+        self.admin_password = admin_password
+        self.token: str | None = None
+        self.secreto_jwt = secrets.token_urlsafe(48)
+        self.password_prueba = secrets.token_urlsafe(24)
 
         self._http = build_opener(ProxyHandler({}))
 
@@ -107,6 +114,9 @@ class ApiDePrueba:
         entorno["DATABASE_URL"] = f"sqlite:///{self.base_de_datos.resolve()}"
         entorno["PYTHONPATH"] = str(raiz / "src")
         entorno["PYTHONDONTWRITEBYTECODE"] = "1"
+        entorno["JWT_SECRET_KEY"] = self.secreto_jwt
+        entorno["ADMIN_EMAIL"] = self.admin_email
+        entorno["ADMIN_PASSWORD"] = self.admin_password
 
         archivo_puerto = self.directorio / "puerto.txt"
         archivo_puerto.unlink(missing_ok=True)
@@ -138,6 +148,23 @@ class ApiDePrueba:
                     if estado == 200 and cuerpo == {
                         "mensaje": "API Taller Mecánico funcionando"
                     }:
+                        if self.autenticar:
+                            datos = {"email": "regresion@example.com", "password": self.password_prueba}
+                            codigo, _ = self.solicitar("POST", "/auth/registro", datos)
+                            if codigo not in (201, 409):
+                                raise RuntimeError("No se pudo preparar el usuario de regresión")
+                            codigo, identidad = self.solicitar("POST", "/auth/login", datos)
+                            if codigo != 200:
+                                raise RuntimeError("No se pudo autenticar el usuario de regresión")
+                            self.token = identidad["access_token"]
+                            from sqlalchemy import create_engine, text
+                            conexion_prueba = create_engine(entorno["DATABASE_URL"])
+                            try:
+                                with conexion_prueba.begin() as conexion:
+                                    conexion.execute(text("UPDATE usuarios SET rol = 'admin' WHERE email = :email"),
+                                                     {"email": "regresion@example.com"})
+                            finally:
+                                conexion_prueba.dispose()
                         return
                 except (OSError, ValueError):
                     pass
@@ -158,6 +185,7 @@ class ApiDePrueba:
         datos: dict[str, Any] | None = None,
         parametros: dict[str, str | int] | None = None,
         timeout: float = 5,
+        headers: dict[str, str] | None = None,
     ) -> tuple[int, Any]:
         if self._url is None or self._proceso is None:
             raise RuntimeError("Primero debes iniciar la API de prueba")
@@ -173,6 +201,10 @@ class ApiDePrueba:
 
         contenido = None if datos is None else json.dumps(datos).encode("utf-8")
         cabeceras = {"Accept": "application/json"}
+        if self.token is not None and not ruta.startswith("/auth/"):
+            cabeceras["Authorization"] = "Bearer " + self.token
+        if headers:
+            cabeceras.update(headers)
         if contenido is not None:
             cabeceras["Content-Type"] = "application/json"
 

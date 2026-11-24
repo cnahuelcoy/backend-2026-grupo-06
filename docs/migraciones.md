@@ -8,6 +8,7 @@ restricciones `UNIQUE` (email y patente) y los `CHECK` de los enums
 
 La revisión `0002` añade `usuarios` y `sesiones`, sin cambiar las cuatro tablas
 del taller. El contrato está en [autenticacion.md](autenticacion.md).
+La revisión `0003` añade intentos fallidos y bloqueo de login a los usuarios existentes.
 
 Alembic usa la misma URL de base de datos que la API (`DATABASE_URL` en
 `database/session.py`). Si no se define la variable, se usa
@@ -37,7 +38,7 @@ uv run alembic history    # lista de migraciones
 uv run alembic check      # revisa que la base coincida con los modelos
 ```
 
-Si todo está bien, `current` muestra `0002 (head)` y `check` muestra
+Si todo está bien, `current` muestra `0003 (head)` y `check` muestra
 `No new upgrade operations detected.`
 
 ## Si la base ya fue creada con create_all()
@@ -55,7 +56,7 @@ sin tocar las tablas ni los datos:
 cp taller_mecanico.db taller_mecanico.backup.db   # respaldo, por si acaso
 uv run alembic stamp 0001
 uv run alembic upgrade head
-uv run alembic current    # debe mostrar 0002 (head)
+uv run alembic current    # debe mostrar 0003 (head)
 uv run alembic check      # debe decir que no hay cambios
 ```
 

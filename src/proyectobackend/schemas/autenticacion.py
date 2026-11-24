@@ -30,3 +30,8 @@ class UsuarioResponse(BaseModel):
     email: str
     rol: RolUsuario
     activo: bool
+
+
+class TokenResponse(BaseModel):
+    access_token: str = Field(repr=False)
+    token_type: str = "bearer"

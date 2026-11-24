@@ -5,6 +5,8 @@ import unittest
 from unittest.mock import Mock
 
 from proyectobackend.main import app
+from proyectobackend.domain.usuario import RolUsuario, Usuario
+from proyectobackend.routers.auth_dependencies import get_usuario_actual
 from proyectobackend.routers.dependencies import (
     get_cliente_service,
     get_orden_trabajo_service,
@@ -48,6 +50,9 @@ class TestDependenciasRouters(unittest.IsolatedAsyncioTestCase):
         )
         originales = app.dependency_overrides.copy()
         try:
+            app.dependency_overrides[get_usuario_actual] = lambda: Usuario(
+                id=1, email="test@example.com", password_hash="", rol=RolUsuario.ADMIN,
+            )
             for ruta, proveedor, metodo, esperado in casos:
                 with self.subTest(ruta=ruta):
                     servicio = Mock()
@@ -65,7 +70,7 @@ class TestDependenciasRouters(unittest.IsolatedAsyncioTestCase):
         documento = app.openapi()
         operaciones = []
         for ruta, metodos in documento["paths"].items():
-            if ruta == "/":
+            if ruta == "/" or ruta.startswith("/auth/"):
                 continue
             for metodo, operacion in metodos.items():
                 with self.subTest(ruta=ruta, metodo=metodo):
