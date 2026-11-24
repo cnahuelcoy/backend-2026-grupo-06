@@ -78,6 +78,7 @@ engine.dispose()
         src = Path(__file__).resolve().parents[1] / "src"
         docker("run", "-d", "--name", api_nombre, "--network", nombre,
                "-e", "DATABASE_URL=" + database_url,
+               "-e", "JWT_SECRET_KEY=" + secrets.token_urlsafe(48),
                "--mount", f"type=bind,source={src},target=/app/src,readonly",
                "-p", "127.0.0.1::8000", "proyectobackend-backend")
         self.addCleanup(lambda: docker("rm", "-f", api_nombre))
@@ -85,11 +86,15 @@ engine.dispose()
         url = f"http://127.0.0.1:{puerto_api}"
         http = build_opener(ProxyHandler({}))
 
+        access = None
+
         def solicitar(ruta, datos=None):
             contenido = json.dumps(datos).encode() if datos is not None else None
             peticion = Request(
                 url + ruta, data=contenido,
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", **(
+                    {"Authorization": "Bearer " + access} if access else {}
+                )},
             )
             try:
                 respuesta = http.open(peticion, timeout=10)
@@ -111,6 +116,11 @@ engine.dispose()
             self.fail("La API aislada no quedó disponible: " + docker("logs", api_nombre))
 
         pid_api = docker("inspect", "--format", "{{.State.Pid}}", api_nombre)
+        credenciales = {"email": "reconexion@example.com", "password": secrets.token_urlsafe(24)}
+        self.assertEqual(solicitar("/auth/registro", credenciales)[0], 201)
+        estado, identidad = solicitar("/auth/login", credenciales)
+        self.assertEqual(estado, 200)
+        access = identidad["access_token"]
         estado, _ = solicitar("/clientes", {
             "nombre": "Ana", "apellido": "Pruebas", "telefono": "+56912345678",
             "email": "reconexion@example.com", "direccion": "Calle Pruebas 123",

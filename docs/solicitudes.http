@@ -29,6 +29,7 @@
 # @name salud
 # Esperado: 200
 GET {{baseUrl}}/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 
@@ -40,6 +41,7 @@ Accept: application/json
 # @name crearCliente
 # Esperado: 201
 POST {{baseUrl}}/clientes
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -55,18 +57,21 @@ Content-Type: application/json
 # @name listarClientes
 # Esperado: 200
 GET {{baseUrl}}/clientes?nombre=Ana&ordenar_por=apellido&direccion=asc&pagina=1&limite=10
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 04. Consultar cliente creado
 # @name obtenerCliente
 # Esperado: 200
 GET {{baseUrl}}/clientes/{{clienteId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 05. Actualizar teléfono del cliente
 # @name actualizarCliente
 # Esperado: 200
 PATCH {{baseUrl}}/clientes/{{clienteId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -78,6 +83,7 @@ Content-Type: application/json
 # @name clienteDuplicado
 # Esperado: 409
 POST {{baseUrl}}/clientes
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -93,6 +99,7 @@ Content-Type: application/json
 # @name clienteInvalido
 # Esperado: 422
 POST {{baseUrl}}/clientes
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -108,6 +115,7 @@ Content-Type: application/json
 # @name clientePatchInvalido
 # Esperado: 422
 PATCH {{baseUrl}}/clientes/{{clienteId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -119,6 +127,7 @@ Content-Type: application/json
 # @name clienteNoExiste
 # Esperado: 404
 GET {{baseUrl}}/clientes/{{idInexistente}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 
@@ -130,6 +139,7 @@ Accept: application/json
 # @name crearVehiculo
 # Esperado: 201
 POST {{baseUrl}}/vehiculos/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -146,18 +156,21 @@ Content-Type: application/json
 # @name listarVehiculos
 # Esperado: 200
 GET {{baseUrl}}/vehiculos/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 12. Consultar vehículo creado
 # @name obtenerVehiculo
 # Esperado: 200
 GET {{baseUrl}}/vehiculos/{{vehiculoId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 13. Actualizar kilometraje
 # @name actualizarVehiculo
 # Esperado: 200
 PATCH {{baseUrl}}/vehiculos/{{vehiculoId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -169,6 +182,7 @@ Content-Type: application/json
 # @name vehiculoDuplicado
 # Esperado: 409
 POST {{baseUrl}}/vehiculos/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -185,6 +199,7 @@ Content-Type: application/json
 # @name vehiculoSinCliente
 # Esperado: 404
 POST {{baseUrl}}/vehiculos/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -201,6 +216,7 @@ Content-Type: application/json
 # @name vehiculoInvalido
 # Esperado: 422
 POST {{baseUrl}}/vehiculos/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -217,6 +233,7 @@ Content-Type: application/json
 # @name vehiculoPatchInvalido
 # Esperado: 422
 PATCH {{baseUrl}}/vehiculos/{{vehiculoId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -228,12 +245,14 @@ Content-Type: application/json
 # @name vehiculoNoExiste
 # Esperado: 404
 GET {{baseUrl}}/vehiculos/{{idInexistente}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 19. Impedir eliminar cliente con vehículos — CLIENT_HAS_VEHICLES
 # @name clienteConVehiculo
 # Esperado: 409
 DELETE {{baseUrl}}/clientes/{{clienteId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 
@@ -245,6 +264,7 @@ Accept: application/json
 # @name crearOrden
 # Esperado: 201
 POST {{baseUrl}}/ordenes-trabajo
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -260,18 +280,21 @@ Content-Type: application/json
 # @name listarOrdenes
 # Esperado: 200
 GET {{baseUrl}}/ordenes-trabajo?estado=pendiente&ordenar_por=fecha_ingreso&direccion=desc&pagina=1&limite=10
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 22. Consultar orden creada
 # @name obtenerOrden
 # Esperado: 200
 GET {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 23. Cambiar estado a en_reparacion
 # @name actualizarOrden
 # Esperado: 200
 PATCH {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -283,6 +306,7 @@ Content-Type: application/json
 # @name ordenSinVehiculo
 # Esperado: 404
 POST {{baseUrl}}/ordenes-trabajo
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -298,6 +322,7 @@ Content-Type: application/json
 # @name ordenInvalida
 # Esperado: 422
 POST {{baseUrl}}/ordenes-trabajo
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -313,6 +338,7 @@ Content-Type: application/json
 # @name ordenPatchInvalido
 # Esperado: 422
 PATCH {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -324,6 +350,7 @@ Content-Type: application/json
 # @name ordenPatchSinVehiculo
 # Esperado: 404
 PATCH {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -335,12 +362,14 @@ Content-Type: application/json
 # @name ordenNoExiste
 # Esperado: 404
 GET {{baseUrl}}/ordenes-trabajo/{{idInexistente}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 29. Rechazar actualización de orden inexistente — WORK_ORDER_NOT_FOUND
 # @name ordenPatchNoExiste
 # Esperado: 404
 PATCH {{baseUrl}}/ordenes-trabajo/{{idInexistente}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -357,6 +386,7 @@ Content-Type: application/json
 # @name crearReparacion
 # Esperado: 201
 POST {{baseUrl}}/reparaciones/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -372,18 +402,21 @@ Content-Type: application/json
 # @name listarReparaciones
 # Esperado: 200
 GET {{baseUrl}}/reparaciones/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 32. Consultar reparación creada
 # @name obtenerReparacion
 # Esperado: 200
 GET {{baseUrl}}/reparaciones/{{reparacionId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 33. Actualizar costo de la reparación
 # @name actualizarReparacion
 # Esperado: 200
 PATCH {{baseUrl}}/reparaciones/{{reparacionId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -395,6 +428,7 @@ Content-Type: application/json
 # @name reparacionSinOrden
 # Esperado: 404
 POST {{baseUrl}}/reparaciones/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -410,6 +444,7 @@ Content-Type: application/json
 # @name reparacionInvalida
 # Esperado: 422
 POST {{baseUrl}}/reparaciones/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -425,6 +460,7 @@ Content-Type: application/json
 # @name reparacionPatchInvalido
 # Esperado: 422
 PATCH {{baseUrl}}/reparaciones/{{reparacionId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -436,6 +472,7 @@ Content-Type: application/json
 # @name reparacionFechaFutura
 # Esperado: 400
 POST {{baseUrl}}/reparaciones/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -451,6 +488,7 @@ Content-Type: application/json
 # @name reparacionPatchFechaFutura
 # Esperado: 400
 PATCH {{baseUrl}}/reparaciones/{{reparacionId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -462,6 +500,7 @@ Content-Type: application/json
 # @name reparacionNoExiste
 # Esperado: 404
 GET {{baseUrl}}/reparaciones/{{idInexistente}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 
@@ -473,24 +512,28 @@ Accept: application/json
 # @name vehiculoConOrden
 # Esperado: 409
 DELETE {{baseUrl}}/vehiculos/{{vehiculoId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 41. Verificar que se conserva el vehículo
 # @name verificarVehiculoConservado
 # Esperado: 200
 GET {{baseUrl}}/vehiculos/{{vehiculoId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 42. Verificar que se conserva la orden
 # @name verificarOrdenConservada
 # Esperado: 200
 GET {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 43. Finalizar la orden
 # @name finalizarOrden
 # Esperado: 200
 PATCH {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -502,6 +545,7 @@ Content-Type: application/json
 # @name reabrirOrdenPendiente
 # Esperado: 409
 PATCH {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -513,6 +557,7 @@ Content-Type: application/json
 # @name reabrirOrdenReparacion
 # Esperado: 409
 PATCH {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -524,24 +569,28 @@ Content-Type: application/json
 # @name verificarOrdenFinalizada
 # Esperado: 200
 GET {{baseUrl}}/ordenes-trabajo/{{ordenId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 47. Rechazar identificador no numérico — VALIDATION_ERROR
 # @name idInvalido
 # Esperado: 422
 GET {{baseUrl}}/ordenes-trabajo/no-es-un-id
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 48. Rechazar página cero — VALIDATION_ERROR
 # @name paginaInvalida
 # Esperado: 422
 GET {{baseUrl}}/clientes?pagina=0
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 49. Rechazar ordenamiento desconocido — VALIDATION_ERROR
 # @name ordenamientoInvalido
 # Esperado: 422
 GET {{baseUrl}}/ordenes-trabajo?ordenar_por=inexistente
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 
@@ -553,6 +602,7 @@ Accept: application/json
 # @name crearClienteBorrable
 # Esperado: 201
 POST {{baseUrl}}/clientes
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -568,24 +618,28 @@ Content-Type: application/json
 # @name borrarCliente
 # Esperado: 204
 DELETE {{baseUrl}}/clientes/{{clienteBorrableId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 52. Consultar cliente eliminado — CLIENT_NOT_FOUND
 # @name consultarClienteBorrado
 # Esperado: 404
 GET {{baseUrl}}/clientes/{{clienteBorrableId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 53. Repetir DELETE de cliente inexistente — CLIENT_NOT_FOUND
 # @name borrarClienteOtraVez
 # Esperado: 404
 DELETE {{baseUrl}}/clientes/{{clienteBorrableId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 54. Crear vehículo sin órdenes para probar DELETE
 # @name crearVehiculoBorrable
 # Esperado: 201
 POST {{baseUrl}}/vehiculos/
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 Content-Type: application/json
 
@@ -602,34 +656,40 @@ Content-Type: application/json
 # @name borrarVehiculo
 # Esperado: 204
 DELETE {{baseUrl}}/vehiculos/{{vehiculoBorrableId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 56. Consultar vehículo eliminado — VEHICLE_NOT_FOUND
 # @name consultarVehiculoBorrado
 # Esperado: 404
 GET {{baseUrl}}/vehiculos/{{vehiculoBorrableId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 57. Repetir DELETE de vehículo inexistente — VEHICLE_NOT_FOUND
 # @name borrarVehiculoOtraVez
 # Esperado: 404
 DELETE {{baseUrl}}/vehiculos/{{vehiculoBorrableId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 58. Eliminar reparación existente (sin cuerpo)
 # @name borrarReparacion
 # Esperado: 204
 DELETE {{baseUrl}}/reparaciones/{{reparacionId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 59. Consultar reparación eliminada — REPAIR_NOT_FOUND
 # @name consultarReparacionBorrada
 # Esperado: 404
 GET {{baseUrl}}/reparaciones/{{reparacionId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json
 
 ### 60. Repetir DELETE de reparación inexistente — REPAIR_NOT_FOUND
 # @name borrarReparacionOtraVez
 # Esperado: 404
 DELETE {{baseUrl}}/reparaciones/{{reparacionId}}
+Authorization: Bearer {{$dotenv API_ACCESS_TOKEN}}
 Accept: application/json

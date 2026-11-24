@@ -1,4 +1,3 @@
-
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 

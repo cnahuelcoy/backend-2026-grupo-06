@@ -5,6 +5,10 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Configurar JWT_SECRET_KEY en .env}
+      JWT_ACCESS_MINUTES: ${JWT_ACCESS_MINUTES:-15}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy

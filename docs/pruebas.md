@@ -1,8 +1,8 @@
 # Pruebas de la API
 
-La suite incluye **74 pruebas** de negocio, persistencia y base de autenticación.
-El 24 de noviembre pasaron las 74 con Docker habilitado y las 14 nuevas también
-en PostgreSQL aislado. Los esquemas y contenedores de prueba se eliminaron.
+La suite incluye **103 pruebas** de negocio, persistencia y autenticación.
+El 24 de noviembre pasaron las 103 con Docker habilitado y 26 comprobaciones
+de usuarios/login también en PostgreSQL aislado, sin esquemas residuales.
 
 ## Ejecutar
 
@@ -25,6 +25,7 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 | test_reconexion_bd.py | 2 | Conexión cerrada y primera consulta tras dos reinicios de PostgreSQL, sin reiniciar la API. |
 | test_paginacion_sql.py | 6 | Filtros, orden, desempates por ID, límites, páginas vacías, totales y consultas SQL. |
 | test_usuarios_sesiones.py | 14 | Migración, unicidad, DTO, roles, consumo simultáneo, revocación y rollback. |
+| test_autenticacion.py | 29 | Argon2id, JWT, permisos, bloqueo simultáneo, admin desde entorno y migración 0003. |
 
 La suite usa SQLite temporal o servicios sustituidos. No modifica las tablas
 del taller. También comprueba errores JSON y respuestas 204 sin cuerpo.
@@ -34,6 +35,8 @@ Usuarios/sesiones también se verifica con "TEST_USUARIOS_POSTGRES_URL" apuntand
 a una BD de prueba: `uv run --no-sync python -m unittest tests.test_usuarios_sesiones -v`.
 Crea esquemas aislados, aplica Alembic y los elimina al terminar. La migración
 se prueba desde cero y desde "0001" con 25 registros por tabla del taller.
+Las doce pruebas "tests.test_autenticacion.TestPersistenciaAuth" usan la misma
+variable para comprobar login y migración en PostgreSQL con datos anteriores.
 
 La reconexión usa "pool_pre_ping" para descartar conexiones cerradas al
 reutilizarlas. La prueba Docker usa contenedores y una red temporales, sin

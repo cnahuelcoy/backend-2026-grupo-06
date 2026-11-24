@@ -48,7 +48,8 @@ backend-2026-grupo-06/
 ├── migrations/
 │   ├── versions/
 │   │   ├── 0001_esquema_inicial.py
-│   │   └── 0002_usuarios_sesiones.py
+│   │   ├── 0002_usuarios_sesiones.py
+│   │   └── 0003_intentos_login.py
 │   ├── env.py
 │   └── script.py.mako
 ├── scripts/
@@ -188,6 +189,10 @@ Configurar las variables de `.env`:
 | POSTGRES_USER | Usuario de PostgreSQL. |
 | POSTGRES_PASSWORD | Contraseña propia; este Compose admite directamente letras, números y guiones. |
 | POSTGRES_DB | Nombre de la base del taller. |
+| JWT_SECRET_KEY | Secreto aleatorio de firma, generado por el comando siguiente. |
+| JWT_ACCESS_MINUTES | Duración del access, de 1 a 30 minutos; por defecto 15. |
+| ADMIN_EMAIL | Correo del administrador, configurado solo en `.env`. |
+| ADMIN_PASSWORD | Contraseña inicial del admin; vacía no crea la cuenta. Solo su hash se guarda en PostgreSQL. |
 
 No publicar `.env`. La API recibe `DATABASE_URL` desde Compose; no necesita
 configurarse por separado. Para ejecutar con Docker no hace falta instalar
@@ -198,6 +203,7 @@ Python ni `uv` en el computador.
 Con Docker Desktop iniciado, ejecutar en este orden sobre una base nueva:
 
 ```powershell
+docker run --rm -v "${PWD}:/workspace" -w /workspace python:3.13-slim python scripts/configurar_auth.py
 docker compose build backend
 docker compose up -d --wait db
 docker compose run --rm backend uv run --no-sync alembic upgrade head
@@ -278,7 +284,7 @@ docker compose exec backend uv run --no-sync alembic current
 docker compose exec backend uv run --no-sync alembic check
 ```
 
-La revisión `0002` añade usuarios y sesiones. Se espera `0002 (head)` y el mensaje `No new upgrade operations detected.`. El [contrato de autenticación](docs/autenticacion.md) prepara el login y JWT de la siguiente tarea.
+Se espera `0003 (head)` y `No new upgrade operations detected.`. Las revisiones `0002` y `0003` añaden usuarios, sesiones y control de intentos de login. Ver [autenticación y creación del administrador](docs/autenticacion.md).
 
 Si las tablas ya existían sin historial de Alembic, respaldar y revisar el esquema siguiendo [migraciones.md](docs/migraciones.md#si-la-base-ya-fue-creada-con-create_all).
 
@@ -306,7 +312,7 @@ Estas pruebas y los datos utilizados se explican en [docs/seeders.md](docs/seede
 
 ## Pruebas automatizadas
 
-El proyecto cuenta con **74 pruebas automatizadas** utilizando `unittest`.
+El proyecto cuenta con **103 pruebas automatizadas** utilizando `unittest`.
 
 Las pruebas comprueban las operaciones de los cuatro módulos, validaciones de datos, códigos de respuesta HTTP, filtros, ordenamiento, paginación, relaciones entre entidades y persistencia después de reiniciar la API.
 
@@ -327,7 +333,7 @@ uv run --no-sync python -B -W error::ResourceWarning -m unittest discover -s tes
 **Resultado de la verificación en Windows con la prueba Docker habilitada:**
 
 ```text
-Ran 74 tests
+Ran 103 tests
 
 OK
 ```
@@ -348,9 +354,8 @@ uv run --no-sync python -m unittest tests.test_paginacion_sql tests.test_concurr
 ```
 
 El detalle y la activación del caso Docker están en [docs/pruebas.md](docs/pruebas.md).
-Las cuentas, autenticación, CI, linter, formato y despliegue institucional se
-integrarán en sus tarjetas posteriores; aún no tienen comandos ni credenciales
-de uso en este README.
+Registro, login, JWT y permisos están en [autenticacion.md](docs/autenticacion.md).
+Refresh, recuperación, CI y despliegue institucional siguen en sus tarjetas.
 
 ## Pruebas HTTP con REST Client
 
@@ -365,7 +370,7 @@ Utilizamos la extensión **REST Client** de VS Code como alternativa a Postman. 
 Con Python y `uv` instalados, ejecutar desde la raíz del proyecto:
 
 ```powershell
-uv run --no-sync python -B -c "from tests.soporte_api import ApiDePrueba; api=ApiDePrueba(); api.iniciar(); print('URL:', api.url, flush=True); input('Presiona Enter para cerrar la API...'); api.cerrar()"
+uv run --no-sync python -B scripts/probar_api_local.py
 ```
 
 La terminal mostrará una dirección como esta:
@@ -375,6 +380,8 @@ URL: http://127.0.0.1:62977
 ```
 
 El puerto se asigna automáticamente y puede cambiar en cada ejecución.
+El comando prepara un admin de prueba y su token en `docs/.env`, ignorado por Git.
+REST Client lee ese Bearer automáticamente; se elimina al cerrar la prueba.
 
 **2. Configurar la dirección en REST Client**
 

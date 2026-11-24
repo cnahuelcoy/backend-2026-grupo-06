@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, CheckConstraint, Enum, Integer, String, text
+from datetime import datetime
+
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from proyectobackend.database.base import Base
@@ -24,3 +26,5 @@ class UsuarioModel(Base):
     )
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
     version_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    intentos_fallidos: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    bloqueado_hasta: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
