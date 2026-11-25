@@ -1,12 +1,11 @@
 import unittest
 from tests.soporte_api import ApiDePrueba
 
-class TestClientes(unittest.TestCase):
 
+class TestClientes(unittest.TestCase):
     def setUp(self) -> None:
         self.api = ApiDePrueba()
 
-        
         self.addCleanup(self.api.cerrar)
 
         self.api.iniciar()
@@ -26,16 +25,13 @@ class TestClientes(unittest.TestCase):
             datos=datos,
         )
 
-        
         self.assertEqual(estado, 201, msg=cuerpo)
 
-        
         self.assertIsInstance(cuerpo, dict)
         self.assertIn("id", cuerpo)
         self.assertIsInstance(cuerpo["id"], int)
         self.assertGreater(cuerpo["id"], 0)
 
-        
         for campo, valor_esperado in datos.items():
             with self.subTest(campo=campo):
                 self.assertIn(campo, cuerpo)
@@ -48,9 +44,8 @@ class TestClientes(unittest.TestCase):
             "telefono": "923456789",
             "email": "luis.pruebas@example.com",
             "direccion": "Calle Pruebas 456",
-        } 
+        }
 
-        
         estado_creacion, cliente_creado = self.api.solicitar(
             metodo="POST",
             ruta="/clientes",
@@ -65,7 +60,6 @@ class TestClientes(unittest.TestCase):
 
         cliente_id = cliente_creado["id"]
 
-       
         estado, cuerpo = self.api.solicitar(
             metodo="GET",
             ruta=f"/clientes/{cliente_id}",
@@ -83,7 +77,6 @@ class TestClientes(unittest.TestCase):
             "direccion": "Calle Pruebas 789",
         }
 
-        
         estado_creacion, cliente_creado = self.api.solicitar(
             metodo="POST",
             ruta="/clientes",
@@ -103,7 +96,6 @@ class TestClientes(unittest.TestCase):
             "direccion": "Avenida Taller 100",
         }
 
-        
         estado_actualizacion, cliente_actualizado = self.api.solicitar(
             metodo="PATCH",
             ruta=f"/clientes/{cliente_id}",
@@ -120,7 +112,6 @@ class TestClientes(unittest.TestCase):
 
         self.assertEqual(cliente_actualizado, esperado)
 
-        
         estado_consulta, cliente_consultado = self.api.solicitar(
             metodo="GET",
             ruta=f"/clientes/{cliente_id}",
@@ -152,7 +143,6 @@ class TestClientes(unittest.TestCase):
             "Cliente no encontrado",
         )
 
-
     def test_crear_cliente_con_email_duplicado_devuelve_409(self) -> None:
         datos = {
             "nombre": "Pedro",
@@ -162,7 +152,6 @@ class TestClientes(unittest.TestCase):
             "direccion": "Calle Pruebas 101",
         }
 
-        
         estado_creacion, cliente_creado = self.api.solicitar(
             metodo="POST",
             ruta="/clientes",
@@ -175,7 +164,6 @@ class TestClientes(unittest.TestCase):
             msg=cliente_creado,
         )
 
-        
         estado, cuerpo = self.api.solicitar(
             metodo="POST",
             ruta="/clientes",
@@ -194,7 +182,6 @@ class TestClientes(unittest.TestCase):
             "Ya existe un cliente registrado con este correo",
         )
 
-       
         estado_listado, listado = self.api.solicitar(
             metodo="GET",
             ruta="/clientes",
@@ -236,10 +223,7 @@ class TestClientes(unittest.TestCase):
         self.assertIsInstance(detalles, list)
 
         self.assertTrue(
-            any(
-                detalle.get("loc") == ["body", "email"]
-                for detalle in detalles
-            ),
+            any(detalle.get("loc") == ["body", "email"] for detalle in detalles),
             msg=detalles,
         )
 

@@ -1,0 +1,86 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: taller_test
+          POSTGRES_PASSWORD: local_ci_only
+          POSTGRES_DB: taller_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taller_test -d taller_test"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      COVERAGE_FILE: ${{ github.workspace }}/.coverage
+      COVERAGE_RCFILE: ${{ github.workspace }}/pyproject.toml
+      TEST_ORDENES_POSTGRES_URL: postgresql+psycopg://taller_test:local_ci_only@localhost:5432/taller_test
+      TEST_PAGINACION_POSTGRES_URL: postgresql+psycopg://taller_test:local_ci_only@localhost:5432/taller_test
+      TEST_USUARIOS_POSTGRES_URL: postgresql+psycopg://taller_test:local_ci_only@localhost:5432/taller_test
+      TEST_RECONEXION_DOCKER: "1"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked
+      - run: uv run --no-sync ruff check src tests scripts migrations
+      - run: uv run --no-sync ruff format --check src tests scripts migrations
+      - run: docker build -t proyectobackend-backend .
+      - run: uv run --no-sync coverage run -m unittest discover -s tests -t .
+      - run: uv run --no-sync coverage combine
+      - run: uv run --no-sync coverage xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+      - run: uv run --no-sync coverage report --show-missing --fail-under=85
+      - if: github.event_name == 'push'
+        run: docker save proyectobackend-backend -o backend-image.tar
+      - if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-backend-image
+          path: backend-image.tar
+          retention-days: 1
+
+  publish:
+    name: Publish validated image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: validated-backend-image
+      - name: Push commit image to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker load -i backend-image.tar
+          docker tag proyectobackend-backend "$image"
+          docker push "$image"
+          printf 'Published image: `%s`\n' "$image" >> "$GITHUB_STEP_SUMMARY"

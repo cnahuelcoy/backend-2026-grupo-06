@@ -72,13 +72,8 @@ class ClienteService:
         if email_nuevo is not None:
             cliente_con_email = self._repository.buscar_por_email(email_nuevo)
 
-            if (
-                cliente_con_email is not None
-                and cliente_con_email.id != cliente_id
-            ):
-                raise ValueError(
-                    "Ya existe un cliente registrado con este correo"
-                )
+            if cliente_con_email is not None and cliente_con_email.id != cliente_id:
+                raise ValueError("Ya existe un cliente registrado con este correo")
 
         for campo, valor in cambios.items():
             setattr(cliente, campo, valor)

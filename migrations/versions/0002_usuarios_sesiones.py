@@ -16,17 +16,33 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("email", sa.String(255), nullable=False, unique=True),
         sa.Column("password_hash", sa.String(255), nullable=False),
-        sa.Column("rol", sa.Enum("operador", "admin", name="rol_usuario", native_enum=False,
-                                 create_constraint=True), nullable=False, server_default="operador"),
-        sa.Column("activo", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column(
+            "rol",
+            sa.Enum(
+                "operador",
+                "admin",
+                name="rol_usuario",
+                native_enum=False,
+                create_constraint=True,
+            ),
+            nullable=False,
+            server_default="operador",
+        ),
+        sa.Column(
+            "activo", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
         sa.Column("version_tokens", sa.Integer(), nullable=False, server_default="0"),
         sa.CheckConstraint("version_tokens >= 0", name="ck_usuario_version_tokens"),
-        sa.CheckConstraint("email = lower(trim(email))", name="ck_usuario_email_normalizado"),
+        sa.CheckConstraint(
+            "email = lower(trim(email))", name="ck_usuario_email_normalizado"
+        ),
     )
     op.create_table(
         "sesiones",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("usuario_id", sa.Integer(), sa.ForeignKey("usuarios.id"), nullable=False),
+        sa.Column(
+            "usuario_id", sa.Integer(), sa.ForeignKey("usuarios.id"), nullable=False
+        ),
         sa.Column("familia_id", sa.String(36), nullable=False),
         sa.Column("refresh_hash", sa.String(64), nullable=False, unique=True),
         sa.Column("version_tokens", sa.Integer(), nullable=False),

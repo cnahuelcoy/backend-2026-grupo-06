@@ -1,4 +1,3 @@
-
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
@@ -75,8 +74,7 @@ def crear_cliente(
     status_code=status.HTTP_200_OK,
     summary="Listar clientes",
     description=(
-        "Lista clientes permitiendo filtrado por nombre, "
-        "ordenamiento y paginación."
+        "Lista clientes permitiendo filtrado por nombre, ordenamiento y paginación."
     ),
 )
 def listar_clientes(
@@ -114,8 +112,7 @@ def listar_clientes(
         404: {"model": ErrorResponse},
     },
     description=(
-        "Consulta un cliente por su identificador numérico. Devuelve 404 si "
-        "no existe."
+        "Consulta un cliente por su identificador numérico. Devuelve 404 si no existe."
     ),
 )
 def obtener_cliente(

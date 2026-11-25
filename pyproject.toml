@@ -24,3 +24,21 @@ proyectobackend = "proyectobackend:main"
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.10",
+    "ruff>=0.17.6",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/env.py" = ["F401"]
+"src/proyectobackend/database/init_db.py" = ["F401"]
+
+[tool.coverage.run]
+source = ["proyectobackend"]
+patch = ["subprocess"]
+data_file = "${COVERAGE_FILE-.coverage}"

@@ -43,10 +43,7 @@ class VehiculoRepository:
             statement = select(VehiculoModel).order_by(VehiculoModel.id)
             modelos = session.scalars(statement).all()
 
-            return [
-                self._to_domain(model)
-                for model in modelos
-            ]
+            return [self._to_domain(model) for model in modelos]
 
     def buscar_por_id(self, vehiculo_id: int) -> Vehiculo | None:
         with SessionLocal() as session:
@@ -59,9 +56,7 @@ class VehiculoRepository:
 
     def buscar_por_patente(self, patente: str) -> Vehiculo | None:
         with SessionLocal() as session:
-            statement = select(VehiculoModel).where(
-                VehiculoModel.patente == patente
-            )
+            statement = select(VehiculoModel).where(VehiculoModel.patente == patente)
 
             model = session.scalar(statement)
 

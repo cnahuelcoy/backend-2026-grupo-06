@@ -5,7 +5,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from proyectobackend.domain.orden_trabajo import EstadoOrdenTrabajo
 
 
-
 class OrdenTrabajoCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -16,7 +15,6 @@ class OrdenTrabajoCreate(BaseModel):
     kilometraje_ingreso: int = Field(ge=0)
 
 
-
 class OrdenTrabajoUpdate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -25,6 +23,7 @@ class OrdenTrabajoUpdate(BaseModel):
     descripcion_problema: str | None = Field(default=None, min_length=5)
     estado: EstadoOrdenTrabajo | None = None
     kilometraje_ingreso: int | None = Field(default=None, ge=0)
+
 
 class OrdenTrabajoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -43,4 +42,3 @@ class OrdenTrabajoListadoResponse(BaseModel):
     pagina: int
     limite: int
     total_paginas: int
-

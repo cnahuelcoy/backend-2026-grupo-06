@@ -10,7 +10,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from proyectobackend.database.init_db import init_db
 from proyectobackend.routers.auth import router as auth_router
 from proyectobackend.routers.auth_dependencies import (
-    autorizar_negocio, get_jwt_service, get_password_hasher, get_usuario_repository,
+    autorizar_negocio,
+    get_jwt_service,
+    get_password_hasher,
+    get_usuario_repository,
 )
 from proyectobackend.services.auth_service import AuthService
 from proyectobackend.routers.clientes import router as clientes_router
@@ -28,8 +31,11 @@ async def lifespan(app: FastAPI):
     init_db()
     admin_password = os.getenv("ADMIN_PASSWORD", "")
     if admin_password:
-        AuthService(get_usuario_repository(), get_password_hasher(), get_jwt_service()).asegurar_admin(
-            os.getenv("ADMIN_EMAIL", ""), admin_password,
+        AuthService(
+            get_usuario_repository(), get_password_hasher(), get_jwt_service()
+        ).asegurar_admin(
+            os.getenv("ADMIN_EMAIL", ""),
+            admin_password,
         )
     yield
 
@@ -50,10 +56,16 @@ async def validation_exception_handler(
         error=ErrorDetail(
             code="VALIDATION_ERROR",
             message="Los datos de la solicitud no son válidos",
-            details=jsonable_encoder([
-                {clave: error[clave] for clave in ("loc", "type", "msg") if clave in error}
-                for error in exc.errors()
-            ]),
+            details=jsonable_encoder(
+                [
+                    {
+                        clave: error[clave]
+                        for clave in ("loc", "type", "msg")
+                        if clave in error
+                    }
+                    for error in exc.errors()
+                ]
+            ),
         )
     )
 
@@ -66,15 +78,31 @@ async def validation_exception_handler(
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     if isinstance(exc.detail, dict) and "code" in exc.detail:
-        return JSONResponse(status_code=exc.status_code, content={"error": exc.detail}, headers=exc.headers)
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"error": exc.detail},
+            headers=exc.headers,
+        )
+    return JSONResponse(
+        status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers
+    )
 
 
 app.include_router(auth_router)
-for router in (clientes_router, vehiculos_router, reparaciones_router, orden_trabajo_router):
-    app.include_router(router, dependencies=[Depends(autorizar_negocio)], responses={
-        401: {"model": ErrorResponse}, 403: {"model": ErrorResponse},
-    })
+for router in (
+    clientes_router,
+    vehiculos_router,
+    reparaciones_router,
+    orden_trabajo_router,
+):
+    app.include_router(
+        router,
+        dependencies=[Depends(autorizar_negocio)],
+        responses={
+            401: {"model": ErrorResponse},
+            403: {"model": ErrorResponse},
+        },
+    )
 
 
 @app.get("/")

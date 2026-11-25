@@ -109,8 +109,7 @@ def listar_vehiculos(
     },
     summary="Obtener un vehículo por ID",
     description=(
-        "Consulta un vehículo por su identificador numérico. Devuelve 404 si "
-        "no existe."
+        "Consulta un vehículo por su identificador numérico. Devuelve 404 si no existe."
     ),
 )
 def obtener_vehiculo(
