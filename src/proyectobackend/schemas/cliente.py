@@ -8,7 +8,7 @@ class ClienteBase(BaseModel):
     nombre: str = Field(min_length=2, max_length=50)
     apellido: str = Field(min_length=2, max_length=50)
     telefono: str = Field(min_length=8, max_length=15)
-    email: str = Field(pattern=EMAIL_PATTERN)
+    email: str = Field(pattern=EMAIL_PATTERN, examples=["ana@example.com"])
     direccion: str = Field(min_length=3, max_length=100)
 
 
@@ -20,7 +20,9 @@ class ClienteUpdate(BaseModel):
     nombre: str | None = Field(default=None, min_length=2, max_length=50)
     apellido: str | None = Field(default=None, min_length=2, max_length=50)
     telefono: str | None = Field(default=None, min_length=8, max_length=15)
-    email: str | None = Field(default=None, pattern=EMAIL_PATTERN)
+    email: str | None = Field(
+        default=None, pattern=EMAIL_PATTERN, examples=["ana@example.com"]
+    )
     direccion: str | None = Field(default=None, min_length=3, max_length=100)
 
 

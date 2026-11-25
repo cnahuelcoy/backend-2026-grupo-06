@@ -1,7 +1,9 @@
 from typing import Literal
 
 from proyectobackend.domain.orden_trabajo import EstadoOrdenTrabajo, OrdenTrabajo
-from proyectobackend.repositories.orden_trabajo_repositorio import OrdenTrabajoRepository
+from proyectobackend.repositories.orden_trabajo_repositorio import (
+    OrdenTrabajoRepository,
+)
 from proyectobackend.schemas.orden_trabajo_schemas import (
     OrdenTrabajoCreate,
     OrdenTrabajoListadoResponse,
@@ -9,6 +11,7 @@ from proyectobackend.schemas.orden_trabajo_schemas import (
     OrdenTrabajoUpdate,
 )
 from proyectobackend.repositories.vehiculo_repository import VehiculoRepository
+
 
 class OrdenTrabajoService:
     def __init__(
@@ -25,7 +28,7 @@ class OrdenTrabajoService:
             raise LookupError(
                 f"VEHICLE_NOT_FOUND:No se encontró el vehículo con ID {datos.vehiculo_id}"
             )
-        
+
         orden = OrdenTrabajo(
             vehiculo_id=datos.vehiculo_id,
             fecha_ingreso=datos.fecha_ingreso,
@@ -54,8 +57,7 @@ class OrdenTrabajoService:
 
         return OrdenTrabajoListadoResponse(
             items=[
-                OrdenTrabajoResponse.model_validate(orden)
-                for orden in ordenes_pagina
+                OrdenTrabajoResponse.model_validate(orden) for orden in ordenes_pagina
             ],
             total=total,
             pagina=pagina,
@@ -83,9 +85,7 @@ class OrdenTrabajoService:
         cambios = datos.model_dump(exclude_unset=True, exclude_none=True)
 
         if "vehiculo_id" in cambios:
-            vehiculo = self.vehiculo_repository.buscar_por_id(
-                cambios["vehiculo_id"]
-            )
+            vehiculo = self.vehiculo_repository.buscar_por_id(cambios["vehiculo_id"])
             if vehiculo is None:
                 raise LookupError(
                     f"VEHICLE_NOT_FOUND:No se encontró el vehículo con ID {cambios['vehiculo_id']}"

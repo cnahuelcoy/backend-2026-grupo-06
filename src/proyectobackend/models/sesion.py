@@ -15,7 +15,9 @@ class SesionModel(Base):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), nullable=False, index=True)
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id"), nullable=False, index=True
+    )
     familia_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     refresh_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     version_tokens: Mapped[int] = mapped_column(Integer, nullable=False)

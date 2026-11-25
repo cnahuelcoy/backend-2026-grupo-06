@@ -9,7 +9,9 @@ class ConfiguracionJWT:
 
     def __post_init__(self):
         if len(self.secret.encode("utf-8")) < 32 or self.secret.startswith("CAMBIAR_"):
-            raise ValueError("Configura JWT_SECRET_KEY con un secreto aleatorio de al menos 32 bytes")
+            raise ValueError(
+                "Configura JWT_SECRET_KEY con un secreto aleatorio de al menos 32 bytes"
+            )
         if not 1 <= self.minutos_access <= 30:
             raise ValueError("JWT_ACCESS_MINUTES debe estar entre 1 y 30")
 

@@ -17,7 +17,11 @@ bearer = HTTPBearer(auto_error=False)
 def error_acceso():
     return HTTPException(
         status_code=401,
-        detail={"code": "INVALID_ACCESS_TOKEN", "message": "Acceso bloqueado", "details": []},
+        detail={
+            "code": "INVALID_ACCESS_TOKEN",
+            "message": "Acceso bloqueado",
+            "details": [],
+        },
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -61,8 +65,15 @@ def get_usuario_actual(
     return usuario
 
 
-def autorizar_negocio(request: Request, usuario: Usuario = Depends(get_usuario_actual)) -> None:
+def autorizar_negocio(
+    request: Request, usuario: Usuario = Depends(get_usuario_actual)
+) -> None:
     if request.method == "DELETE" and usuario.rol != RolUsuario.ADMIN:
-        raise HTTPException(status_code=403, detail={
-            "code": "FORBIDDEN", "message": "Acceso bloqueado", "details": [],
-        })
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "FORBIDDEN",
+                "message": "Acceso bloqueado",
+                "details": [],
+            },
+        )

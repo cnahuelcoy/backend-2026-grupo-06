@@ -9,7 +9,9 @@ from tests.soporte_api import ApiDePrueba
 def main():
     archivo = Path(__file__).resolve().parents[1] / "docs" / ".env"
     if archivo.exists():
-        raise SystemExit("docs/.env ya existe; se conserva. Usa otra copia del proyecto para la prueba temporal.")
+        raise SystemExit(
+            "docs/.env ya existe; se conserva. Usa otra copia del proyecto para la prueba temporal."
+        )
     with ApiDePrueba() as api:
         contenido = "API_ACCESS_TOKEN=" + api.token + "\n"
         with archivo.open("x", encoding="utf-8") as salida:

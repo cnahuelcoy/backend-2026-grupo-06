@@ -1,12 +1,13 @@
 from datetime import date
 from proyectobackend.domain.reparacion import Reparacion
-from proyectobackend.repositories.orden_trabajo_repositorio import OrdenTrabajoRepository
+from proyectobackend.repositories.orden_trabajo_repositorio import (
+    OrdenTrabajoRepository,
+)
 from proyectobackend.repositories.reparacion_repository import ReparacionRepository
 from proyectobackend.schemas.reparacion import ReparacionCreate, ReparacionUpdate
 
 
 class ReparacionService:
-
     def __init__(
         self,
         repository: ReparacionRepository,
@@ -17,7 +18,9 @@ class ReparacionService:
 
     def crear_reparacion(self, dto: ReparacionCreate) -> Reparacion:
         if dto.fecha > date.today():
-            raise ValueError("INVALID_REPAIR_DATE:La fecha de la reparación no puede ser futura")
+            raise ValueError(
+                "INVALID_REPAIR_DATE:La fecha de la reparación no puede ser futura"
+            )
 
         orden = self._orden_repository.buscar_por_id(dto.orden_trabajo_id)
         if orden is None:
@@ -60,7 +63,9 @@ class ReparacionService:
         datos_actualizar = dto.model_dump(exclude_unset=True, exclude_none=True)
 
         if "fecha" in datos_actualizar and datos_actualizar["fecha"] > date.today():
-            raise ValueError("INVALID_REPAIR_DATE:La fecha de la reparación no puede ser futura")
+            raise ValueError(
+                "INVALID_REPAIR_DATE:La fecha de la reparación no puede ser futura"
+            )
 
         return self._repository.actualizar(reparacion_id, datos_actualizar)
 

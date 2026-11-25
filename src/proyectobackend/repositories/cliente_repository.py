@@ -40,10 +40,7 @@ class ClienteRepository:
             statement = select(ClienteModel)
             modelos = session.scalars(statement).all()
 
-            return [
-                self._to_domain(model)
-                for model in modelos
-            ]
+            return [self._to_domain(model) for model in modelos]
 
     def buscar_por_id(self, cliente_id: int) -> Cliente | None:
         with SessionLocal() as session:
@@ -79,7 +76,9 @@ class ClienteRepository:
         with SessionLocal() as session:
             columna = columnas[ordenar_por]
             if ordenar_por != "id":
-                intercalacion = "C" if session.get_bind().dialect.name == "postgresql" else "BINARY"
+                intercalacion = (
+                    "C" if session.get_bind().dialect.name == "postgresql" else "BINARY"
+                )
                 columna = columna.collate(intercalacion)
             orden = columna.desc() if direccion == "desc" else columna.asc()
             total = session.scalar(

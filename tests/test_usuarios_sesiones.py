@@ -16,7 +16,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateSchema, DropSchema
 
-from proyectobackend.domain.usuario import EmailUsuarioDuplicado, RolUsuario, UsuarioNoDisponible
+from proyectobackend.domain.usuario import (
+    EmailUsuarioDuplicado,
+    RolUsuario,
+    UsuarioNoDisponible,
+)
 from proyectobackend.models.cliente import ClienteModel
 from proyectobackend.models.orden_trabajo import OrdenTrabajoModel
 from proyectobackend.models.reparacion import ReparacionModel
@@ -25,7 +29,11 @@ from proyectobackend.models.usuario import UsuarioModel
 from proyectobackend.models.vehiculo import VehiculoModel
 from proyectobackend.repositories.sesion_repository import SesionRepository
 from proyectobackend.repositories.usuario_repository import UsuarioRepository
-from proyectobackend.schemas.autenticacion import UsuarioLogin, UsuarioRegistro, UsuarioResponse
+from proyectobackend.schemas.autenticacion import (
+    UsuarioLogin,
+    UsuarioRegistro,
+    UsuarioResponse,
+)
 
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -62,17 +70,23 @@ class BaseUsuariosSesiones(unittest.TestCase):
         cls.engine = create_engine(url)
         cls.addClassCleanup(cls.engine.dispose)
         if cls.engine.dialect.name == "sqlite":
+
             @event.listens_for(cls.engine, "connect")
             def activar_fk(conexion, registro):
                 conexion.execute("PRAGMA foreign_keys = ON")
+
         cls.factory = sessionmaker(bind=cls.engine, expire_on_commit=False)
         cls.preparar()
 
     @classmethod
     def alembic(cls, *args):
         resultado = subprocess.run(
-            [sys.executable, "-B", "-m", "alembic", *args], cwd=RAIZ,
-            env=cls.entorno, capture_output=True, text=True, timeout=35,
+            [sys.executable, "-B", "-m", "alembic", *args],
+            cwd=RAIZ,
+            env=cls.entorno,
+            capture_output=True,
+            text=True,
+            timeout=35,
         )
         if resultado.returncode:
             raise AssertionError(resultado.stdout + resultado.stderr)
@@ -95,7 +109,9 @@ class TestUsuariosSesiones(BaseUsuariosSesiones):
     def crear_sesion(self, sufijo="a", usuario=None):
         usuario = usuario or self.usuario
         return self.sesiones.crear(
-            usuario.id, sufijo * 64, datetime.now(timezone.utc) + timedelta(days=1),
+            usuario.id,
+            sufijo * 64,
+            datetime.now(timezone.utc) + timedelta(days=1),
             usuario.version_tokens,
         )
 
@@ -105,13 +121,17 @@ class TestUsuariosSesiones(BaseUsuariosSesiones):
         self.assertTrue(self.usuario.activo)
         with self.assertRaises(EmailUsuarioDuplicado):
             self.usuarios.crear("OPERADOR@example.com", HASH_CREDENCIAL)
-        self.assertEqual(self.usuarios.buscar_por_email(" OPERADOR@example.com "), self.usuario)
+        self.assertEqual(
+            self.usuarios.buscar_por_email(" OPERADOR@example.com "), self.usuario
+        )
 
     def test_respuesta_no_expone_credenciales_ni_version(self):
         publico = UsuarioResponse.model_validate(self.usuario).model_dump(mode="json")
         self.assertEqual(set(publico), {"id", "email", "rol", "activo"})
         self.assertNotIn(HASH_CREDENCIAL, repr(self.usuario))
-        registro = UsuarioRegistro(email=" NUEVO@Example.com ", password="Clave de prueba 123")
+        registro = UsuarioRegistro(
+            email=" NUEVO@Example.com ", password="Clave de prueba 123"
+        )
         self.assertEqual(registro.email, "nuevo@example.com")
         self.assertNotIn("password", registro.model_dump())
         self.assertNotIn("Clave de prueba 123", repr(registro))
@@ -119,16 +139,25 @@ class TestUsuariosSesiones(BaseUsuariosSesiones):
     def test_registro_no_permite_elegir_privilegios_y_exige_doce_caracteres(self):
         for campo, valor in (("rol", "admin"), ("activo", True), ("version_tokens", 5)):
             with self.subTest(campo=campo), self.assertRaises(ValidationError):
-                UsuarioRegistro(email="nuevo@example.com", password="Clave de prueba 123", **{campo: valor})
+                UsuarioRegistro(
+                    email="nuevo@example.com",
+                    password="Clave de prueba 123",
+                    **{campo: valor},
+                )
         with self.assertRaises(ValidationError):
             UsuarioRegistro(email="nuevo@example.com", password="corta")
         with self.assertRaises(ValidationError):
             UsuarioLogin(email="correo_invalido", password="clave")
 
     def test_dos_roles_sin_asociacion_obligatoria_a_cliente(self):
-        admin = self.usuarios.crear("admin@example.com", HASH_CREDENCIAL, RolUsuario.ADMIN)
+        admin = self.usuarios.crear(
+            "admin@example.com", HASH_CREDENCIAL, RolUsuario.ADMIN
+        )
         self.assertEqual(self.usuarios.buscar_por_id(admin.id).rol, RolUsuario.ADMIN)
-        self.assertNotIn("cliente_id", {col["name"] for col in inspect(self.engine).get_columns("usuarios")})
+        self.assertNotIn(
+            "cliente_id",
+            {col["name"] for col in inspect(self.engine).get_columns("usuarios")},
+        )
 
     def test_persistencia_hash_unico_y_relacion_usuario(self):
         sesion = self.crear_sesion()
@@ -142,11 +171,17 @@ class TestUsuariosSesiones(BaseUsuariosSesiones):
         with self.assertRaises(UsuarioNoDisponible):
             self.sesiones.crear(999999, "b" * 64, sesion.expira_en, 0)
         with self.factory.begin() as session, self.assertRaises(IntegrityError):
-            session.add(SesionModel(
-                id=str(uuid4()), usuario_id=999999, familia_id=str(uuid4()),
-                refresh_hash="c" * 64, version_tokens=0,
-                creada_en=datetime.now(timezone.utc), expira_en=sesion.expira_en,
-            ))
+            session.add(
+                SesionModel(
+                    id=str(uuid4()),
+                    usuario_id=999999,
+                    familia_id=str(uuid4()),
+                    refresh_hash="c" * 64,
+                    version_tokens=0,
+                    creada_en=datetime.now(timezone.utc),
+                    expira_en=sesion.expira_en,
+                )
+            )
             session.flush()
 
     def test_consumo_atomico_y_expiracion(self):
@@ -176,22 +211,32 @@ class TestUsuariosSesiones(BaseUsuariosSesiones):
         self.assertEqual(self.sesiones.revocar_familia(primera.familia_id), 1)
         self.assertEqual(self.sesiones.revocar_familia(primera.familia_id), 0)
         self.assertFalse(self.sesiones.consumir(primera.id, datetime.now(timezone.utc)))
-        self.assertTrue(self.sesiones.buscar_por_hash(otra.refresh_hash).vigente(datetime.now(timezone.utc)))
+        self.assertTrue(
+            self.sesiones.buscar_por_hash(otra.refresh_hash).vigente(
+                datetime.now(timezone.utc)
+            )
+        )
 
     def test_cambio_de_hash_invalida_version_y_todas_las_sesiones(self):
         self.crear_sesion()
         self.crear_sesion("b")
         otro = self.usuarios.crear("otro@example.com", HASH_CREDENCIAL)
         sesion_ajena = self.crear_sesion("c", otro)
-        actualizado = self.usuarios.cambiar_password_hash(self.usuario.id, HASH_CREDENCIAL + "nuevo")
+        actualizado = self.usuarios.cambiar_password_hash(
+            self.usuario.id, HASH_CREDENCIAL + "nuevo"
+        )
         self.assertEqual(actualizado.version_tokens, 1)
         self.assertEqual(actualizado.password_hash, HASH_CREDENCIAL + "nuevo")
         for letra in ("a", "b"):
             self.assertIsNotNone(self.sesiones.buscar_por_hash(letra * 64).revocada_en)
-        self.assertIsNone(self.sesiones.buscar_por_hash(sesion_ajena.refresh_hash).revocada_en)
+        self.assertIsNone(
+            self.sesiones.buscar_por_hash(sesion_ajena.refresh_hash).revocada_en
+        )
         with self.assertRaises(UsuarioNoDisponible):
             self.crear_sesion("d")
-        self.assertTrue(self.crear_sesion("d", actualizado).vigente(datetime.now(timezone.utc)))
+        self.assertTrue(
+            self.crear_sesion("d", actualizado).vigente(datetime.now(timezone.utc))
+        )
 
     def test_desactivacion_invalida_sesiones_y_rechaza_nuevas(self):
         self.crear_sesion()
@@ -213,19 +258,31 @@ class TestUsuariosSesiones(BaseUsuariosSesiones):
         event.listen(self.engine, "before_cursor_execute", fallar)
         try:
             with self.assertRaises(RuntimeError):
-                self.usuarios.cambiar_password_hash(self.usuario.id, HASH_CREDENCIAL + "nuevo")
+                self.usuarios.cambiar_password_hash(
+                    self.usuario.id, HASH_CREDENCIAL + "nuevo"
+                )
         finally:
             event.remove(self.engine, "before_cursor_execute", fallar)
         self.assertEqual(self.usuarios.buscar_por_id(self.usuario.id), self.usuario)
         self.assertIsNone(self.sesiones.buscar_por_hash("a" * 64).revocada_en)
 
     def test_bd_rechaza_roles_y_versiones_invalidas(self):
-        for cambios in ({"rol": "invitado"}, {"version_tokens": -1}, {"email": "MAYUSCULA@example.com"}):
+        for cambios in (
+            {"rol": "invitado"},
+            {"version_tokens": -1},
+            {"email": "MAYUSCULA@example.com"},
+        ):
             with self.subTest(cambios=cambios), self.assertRaises(IntegrityError):
                 with self.factory.begin() as session:
-                    session.add(UsuarioModel(**{
-                        "email": "nuevo@example.com", "password_hash": HASH_CREDENCIAL, **cambios,
-                    }))
+                    session.add(
+                        UsuarioModel(
+                            **{
+                                "email": "nuevo@example.com",
+                                "password_hash": HASH_CREDENCIAL,
+                                **cambios,
+                            }
+                        )
+                    )
 
     def test_rechaza_token_sin_hash_y_fechas_invalidas(self):
         futuro = datetime.now(timezone.utc) + timedelta(days=1)
@@ -243,22 +300,47 @@ class TestMigracionUsuariosSesiones(BaseUsuariosSesiones):
         cls.alembic("upgrade", "0001")
         with cls.engine.begin() as conexion:
             for numero in range(1, 26):
-                conexion.execute(ClienteModel.__table__.insert().values(
-                    id=numero, nombre="Cliente", apellido="Prueba", telefono="+56912345678",
-                    email=f"cliente{numero}@example.com", direccion="Calle Prueba 123",
-                ))
-                conexion.execute(VehiculoModel.__table__.insert().values(
-                    id=numero, cliente_id=numero, patente=f"AA{numero:04}", marca="Toyota",
-                    modelo="Yaris", anio=2020, kilometraje=1000,
-                ))
-                conexion.execute(OrdenTrabajoModel.__table__.insert().values(
-                    id=numero, vehiculo_id=numero, fecha_ingreso=date(2026, 1, 1),
-                    descripcion_problema="Revisión de frenos", kilometraje_ingreso=1000, estado="pendiente",
-                ))
-                conexion.execute(ReparacionModel.__table__.insert().values(
-                    id=numero, orden_trabajo_id=numero, descripcion="Revisión", tipo="diagnostico",
-                    costo=15000, fecha=date(2026, 1, 1),
-                ))
+                conexion.execute(
+                    ClienteModel.__table__.insert().values(
+                        id=numero,
+                        nombre="Cliente",
+                        apellido="Prueba",
+                        telefono="+56912345678",
+                        email=f"cliente{numero}@example.com",
+                        direccion="Calle Prueba 123",
+                    )
+                )
+                conexion.execute(
+                    VehiculoModel.__table__.insert().values(
+                        id=numero,
+                        cliente_id=numero,
+                        patente=f"AA{numero:04}",
+                        marca="Toyota",
+                        modelo="Yaris",
+                        anio=2020,
+                        kilometraje=1000,
+                    )
+                )
+                conexion.execute(
+                    OrdenTrabajoModel.__table__.insert().values(
+                        id=numero,
+                        vehiculo_id=numero,
+                        fecha_ingreso=date(2026, 1, 1),
+                        descripcion_problema="Revisión de frenos",
+                        kilometraje_ingreso=1000,
+                        estado="pendiente",
+                    )
+                )
+                conexion.execute(
+                    ReparacionModel.__table__.insert().values(
+                        id=numero,
+                        orden_trabajo_id=numero,
+                        descripcion="Revisión",
+                        tipo="diagnostico",
+                        costo=15000,
+                        fecha=date(2026, 1, 1),
+                    )
+                )
 
     def test_upgrade_y_downgrade_conservan_datos_del_taller(self):
         self.alembic("upgrade", "head")
@@ -268,9 +350,15 @@ class TestMigracionUsuariosSesiones(BaseUsuariosSesiones):
         def verificar():
             with self.engine.connect() as conexion:
                 for modelo in tablas:
-                    self.assertEqual(conexion.scalar(select(func.count()).select_from(modelo)), 25)
-                self.assertEqual(conexion.scalar(select(ClienteModel.email).where(ClienteModel.id == 1)),
-                                 "cliente1@example.com")
+                    self.assertEqual(
+                        conexion.scalar(select(func.count()).select_from(modelo)), 25
+                    )
+                self.assertEqual(
+                    conexion.scalar(
+                        select(ClienteModel.email).where(ClienteModel.id == 1)
+                    ),
+                    "cliente1@example.com",
+                )
 
         verificar()
         self.alembic("downgrade", "0001")

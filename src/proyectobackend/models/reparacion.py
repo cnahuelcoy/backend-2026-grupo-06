@@ -1,4 +1,3 @@
-
 from datetime import date
 
 from sqlalchemy import Date, Enum as SQLAlchemyEnum, Float, ForeignKey, Integer, Text
@@ -32,9 +31,7 @@ class ReparacionModel(Base):
         SQLAlchemyEnum(
             TipoReparacion,
             name="tipo_reparacion",
-            values_callable=lambda enum_cls: [
-                member.value for member in enum_cls
-            ],
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
             native_enum=False,
             create_constraint=True,
             validate_strings=True,

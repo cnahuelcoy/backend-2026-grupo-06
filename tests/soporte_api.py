@@ -16,6 +16,8 @@ _ARRANQUE_API = """
 import json
 from pathlib import Path
 import socket
+from threading import Thread
+import time
 import uvicorn
 from sqlalchemy import event
 
@@ -68,12 +70,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as conexion:
         access_log=False,
     )
 
-    uvicorn.Server(configuracion).run(sockets=[conexion])
+    servidor = uvicorn.Server(configuracion)
+
+    def esperar_cierre():
+        while not Path("cerrar-api").exists():
+            time.sleep(0.05)
+        servidor.should_exit = True
+
+    Thread(target=esperar_cierre, daemon=True).start()
+    servidor.run(sockets=[conexion])
 """
 
 
 class ApiDePrueba:
-    def __init__(self, autenticar: bool = True, admin_email: str = "", admin_password: str = "") -> None:
+    def __init__(
+        self, autenticar: bool = True, admin_email: str = "", admin_password: str = ""
+    ) -> None:
         self._temporal = TemporaryDirectory(prefix="parte5-api")
         self.directorio = Path(self._temporal.name)
         self.base_de_datos = self.directorio / "taller_mecanico.db"
@@ -120,6 +132,7 @@ class ApiDePrueba:
 
         archivo_puerto = self.directorio / "puerto.txt"
         archivo_puerto.unlink(missing_ok=True)
+        (self.directorio / "cerrar-api").unlink(missing_ok=True)
         registro = self.directorio / "api.log"
 
         with registro.open("ab") as salida:
@@ -142,27 +155,39 @@ class ApiDePrueba:
                     puerto = int(archivo_puerto.read_text(encoding="utf-8"))
                     self._url = f"http://127.0.0.1:{puerto}"
 
-                    estado, cuerpo = self.solicitar(
-                        "GET", "/", timeout=0.5
-                    )
+                    estado, cuerpo = self.solicitar("GET", "/", timeout=0.5)
                     if estado == 200 and cuerpo == {
                         "mensaje": "API Taller Mecánico funcionando"
                     }:
                         if self.autenticar:
-                            datos = {"email": "regresion@example.com", "password": self.password_prueba}
+                            datos = {
+                                "email": "regresion@example.com",
+                                "password": self.password_prueba,
+                            }
                             codigo, _ = self.solicitar("POST", "/auth/registro", datos)
                             if codigo not in (201, 409):
-                                raise RuntimeError("No se pudo preparar el usuario de regresión")
-                            codigo, identidad = self.solicitar("POST", "/auth/login", datos)
+                                raise RuntimeError(
+                                    "No se pudo preparar el usuario de regresión"
+                                )
+                            codigo, identidad = self.solicitar(
+                                "POST", "/auth/login", datos
+                            )
                             if codigo != 200:
-                                raise RuntimeError("No se pudo autenticar el usuario de regresión")
+                                raise RuntimeError(
+                                    "No se pudo autenticar el usuario de regresión"
+                                )
                             self.token = identidad["access_token"]
                             from sqlalchemy import create_engine, text
+
                             conexion_prueba = create_engine(entorno["DATABASE_URL"])
                             try:
                                 with conexion_prueba.begin() as conexion:
-                                    conexion.execute(text("UPDATE usuarios SET rol = 'admin' WHERE email = :email"),
-                                                     {"email": "regresion@example.com"})
+                                    conexion.execute(
+                                        text(
+                                            "UPDATE usuarios SET rol = 'admin' WHERE email = :email"
+                                        ),
+                                        {"email": "regresion@example.com"},
+                                    )
                             finally:
                                 conexion_prueba.dispose()
                         return
@@ -238,7 +263,7 @@ class ApiDePrueba:
         if self._proceso is not None:
             proceso = self._proceso
             if proceso.poll() is None:
-                proceso.terminate()
+                (self.directorio / "cerrar-api").touch()
                 try:
                     proceso.wait(timeout=5)
                 except subprocess.TimeoutExpired:

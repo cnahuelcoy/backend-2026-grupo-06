@@ -19,9 +19,11 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
+
 def configurar_minusculas_sqlite(conexion, registro) -> None:
     conexion.create_function(
-        "lower", 1,
+        "lower",
+        1,
         lambda valor: valor.lower() if valor is not None else None,
         deterministic=True,
     )

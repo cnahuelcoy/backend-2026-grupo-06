@@ -27,21 +27,38 @@ class TestDependenciasRouters(unittest.IsolatedAsyncioTestCase):
 
         await app(
             {
-                "type": "http", "asgi": {"version": "3.0"},
-                "http_version": "1.1", "method": "GET", "scheme": "http",
-                "path": ruta, "raw_path": ruta.encode(), "root_path": "",
-                "query_string": b"", "headers": [],
-                "client": ("127.0.0.1", 1234), "server": ("pruebas", 80),
+                "type": "http",
+                "asgi": {"version": "3.0"},
+                "http_version": "1.1",
+                "method": "GET",
+                "scheme": "http",
+                "path": ruta,
+                "raw_path": ruta.encode(),
+                "root_path": "",
+                "query_string": b"",
+                "headers": [],
+                "client": ("127.0.0.1", 1234),
+                "server": ("pruebas", 80),
             },
             receive,
             send,
         )
-        estado = next(m["status"] for m in mensajes if m["type"] == "http.response.start")
-        cuerpo = b"".join(m.get("body", b"") for m in mensajes if m["type"] == "http.response.body")
+        estado = next(
+            m["status"] for m in mensajes if m["type"] == "http.response.start"
+        )
+        cuerpo = b"".join(
+            m.get("body", b"") for m in mensajes if m["type"] == "http.response.body"
+        )
         return estado, json.loads(cuerpo)
 
     async def test_los_cuatro_routers_permiten_sustituir_su_servicio(self):
-        pagina = {"items": [], "total": 0, "pagina": 1, "limite": 10, "total_paginas": 0}
+        pagina = {
+            "items": [],
+            "total": 0,
+            "pagina": 1,
+            "limite": 10,
+            "total_paginas": 0,
+        }
         casos = (
             ("/clientes", get_cliente_service, "listar", pagina),
             ("/vehiculos/", get_vehiculo_service, "listar_vehiculos", []),
@@ -51,7 +68,10 @@ class TestDependenciasRouters(unittest.IsolatedAsyncioTestCase):
         originales = app.dependency_overrides.copy()
         try:
             app.dependency_overrides[get_usuario_actual] = lambda: Usuario(
-                id=1, email="test@example.com", password_hash="", rol=RolUsuario.ADMIN,
+                id=1,
+                email="test@example.com",
+                password_hash="",
+                rol=RolUsuario.ADMIN,
             )
             for ruta, proveedor, metodo, esperado in casos:
                 with self.subTest(ruta=ruta):
@@ -77,6 +97,8 @@ class TestDependenciasRouters(unittest.IsolatedAsyncioTestCase):
                     self.assertTrue(operacion.get("summary"))
                     self.assertTrue(operacion.get("description"))
                     parametros = {p["name"] for p in operacion.get("parameters", [])}
-                    self.assertTrue(parametros.isdisjoint({"service", "vehiculo_service"}))
+                    self.assertTrue(
+                        parametros.isdisjoint({"service", "vehiculo_service"})
+                    )
                     operaciones.append((ruta, metodo))
         self.assertEqual(len(operaciones), 19)

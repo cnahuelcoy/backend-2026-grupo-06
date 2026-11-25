@@ -1,4 +1,3 @@
-
 from sqlalchemy import select
 
 from proyectobackend.database.session import SessionLocal
@@ -7,7 +6,6 @@ from proyectobackend.models.reparacion import ReparacionModel
 
 
 class ReparacionRepository:
-
     @staticmethod
     def _to_domain(model: ReparacionModel) -> Reparacion:
         return Reparacion(
@@ -38,9 +36,7 @@ class ReparacionRepository:
 
     def listar(self) -> list[Reparacion]:
         with SessionLocal() as session:
-            statement = select(ReparacionModel).order_by(
-                ReparacionModel.id
-            )
+            statement = select(ReparacionModel).order_by(ReparacionModel.id)
             modelos = session.scalars(statement).all()
 
             return [self._to_domain(model) for model in modelos]
@@ -54,9 +50,7 @@ class ReparacionRepository:
 
             return self._to_domain(model)
 
-    def actualizar(
-        self, reparacion_id: int, datos: dict
-    ) -> Reparacion | None:
+    def actualizar(self, reparacion_id: int, datos: dict) -> Reparacion | None:
         with SessionLocal() as session:
             model = session.get(ReparacionModel, reparacion_id)
 

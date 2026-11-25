@@ -79,8 +79,7 @@ def crear_orden_trabajo(
     },
     summary="Obtener una orden de trabajo por ID",
     description=(
-        "Consulta una orden por su identificador numérico. Devuelve 404 si no "
-        "existe."
+        "Consulta una orden por su identificador numérico. Devuelve 404 si no existe."
     ),
 )
 def obtener_orden_trabajo(

@@ -2,7 +2,9 @@ from sqlalchemy import func, select, update
 
 from proyectobackend.database.session import SessionLocal
 from proyectobackend.domain.orden_trabajo import (
-    ConflictoOrdenTrabajo, EstadoOrdenTrabajo, OrdenTrabajo,
+    ConflictoOrdenTrabajo,
+    EstadoOrdenTrabajo,
+    OrdenTrabajo,
 )
 from proyectobackend.models.orden_trabajo import OrdenTrabajoModel
 
@@ -38,16 +40,11 @@ class OrdenTrabajoRepository:
 
     def listar(self) -> list[OrdenTrabajo]:
         with SessionLocal() as session:
-            statement = select(OrdenTrabajoModel).order_by(
-                OrdenTrabajoModel.id.asc()
-            )
+            statement = select(OrdenTrabajoModel).order_by(OrdenTrabajoModel.id.asc())
 
             modelos = session.scalars(statement).all()
 
-            return [
-                self._to_domain(model)
-                for model in modelos
-            ]
+            return [self._to_domain(model) for model in modelos]
 
     def buscar_por_id(self, orden_id: int) -> OrdenTrabajo | None:
         with SessionLocal() as session:
@@ -101,8 +98,11 @@ class OrdenTrabajoRepository:
         if not cambios:
             return self.buscar_por_id(orden_id)
         campos = (
-            "vehiculo_id", "fecha_ingreso", "descripcion_problema",
-            "kilometraje_ingreso", "estado",
+            "vehiculo_id",
+            "fecha_ingreso",
+            "descripcion_problema",
+            "kilometraje_ingreso",
+            "estado",
         )
         # La comparación y la escritura son una única operación SQL. Comparar
         # solamente en Python permitiría que otra transacción cambie la orden
@@ -111,8 +111,10 @@ class OrdenTrabajoRepository:
             update(OrdenTrabajoModel)
             .where(
                 OrdenTrabajoModel.id == orden_id,
-                *(getattr(OrdenTrabajoModel, campo) == getattr(orden_original, campo)
-                  for campo in campos),
+                *(
+                    getattr(OrdenTrabajoModel, campo) == getattr(orden_original, campo)
+                    for campo in campos
+                ),
             )
             .values(cambios)
             .returning(OrdenTrabajoModel)

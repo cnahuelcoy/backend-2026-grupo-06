@@ -127,10 +127,7 @@ class TestIntegracion(unittest.TestCase):
                 self.assertEqual(
                     cuerpo,
                     {
-                        "items": [
-                            creados[apellido]
-                            for apellido in apellidos
-                        ],
+                        "items": [creados[apellido] for apellido in apellidos],
                         "total": 4,
                         "pagina": pagina,
                         "limite": 2,
