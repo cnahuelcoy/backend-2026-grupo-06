@@ -7,7 +7,9 @@ from proyectobackend.schemas.cliente import EMAIL_PATTERN
 class IdentificadorUsuario(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    email: str = Field(max_length=255, pattern=EMAIL_PATTERN)
+    email: str = Field(
+        max_length=255, pattern=EMAIL_PATTERN, examples=["ana@example.com"]
+    )
 
     @field_validator("email", mode="before")
     @classmethod
@@ -27,7 +29,7 @@ class UsuarioResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    email: str
+    email: str = Field(examples=["ana@example.com"])
     rol: RolUsuario
     activo: bool
 
