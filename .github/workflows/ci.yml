@@ -66,6 +66,9 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
     runs-on: ubuntu-latest
+    concurrency:
+      group: kubero-production-publish
+      cancel-in-progress: false
     permissions:
       contents: read
       packages: write
@@ -83,4 +86,26 @@ jobs:
           docker load -i backend-image.tar
           docker tag proyectobackend-backend "$image"
           docker push "$image"
+          latest="${image%:*}:latest"
+          docker tag "$image" "$latest"
+          docker push "$latest"
           printf 'Published image: `%s`\n' "$image" >> "$GITHUB_STEP_SUMMARY"
+      - name: Request Kubero restart
+        if: vars.KUBERO_AUTODEPLOY == 'true'
+        env:
+          KUBERO_TOKEN: ${{ secrets.KUBERO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$KUBERO_TOKEN" ]]; then
+            echo "::error::Configure the KUBERO_TOKEN repository secret."
+            exit 1
+          fi
+          status=$(curl --silent --show-error --max-time 30 --output /dev/null \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer $KUBERO_TOKEN" \
+            'https://kubero.inf.uct.cl/api/apps/taller-mecanico/production/taller-mecanico/restart')
+          if [[ "$status" != 200 ]]; then
+            echo "::error::Kubero rejected the restart request (HTTP $status)."
+            exit 1
+          fi
+          echo "Kubero accepted the restart request."
